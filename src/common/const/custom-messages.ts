@@ -49,16 +49,6 @@ export class CustomMessages {
 
   static INVALID_JSON = 'JSON is invalid';
 
-  static WEBHOOK_CREATED = 'webhook created successfully';
-
-  static WEBHOOK_UPDATED = 'webhook updated successfully';
-
-  static WEBHOOK_NOT_FOUND = 'webhook not found';
-
-  static WEBHOOK_EXISTS = 'webhook already exists';
-
-  static WEBHOOK_NOT_EXISTS = 'webhook does not exists';
-
   static FLOW_NOT_ON_HOLD = 'Flow is not on-hold';
 
 }
