@@ -2,9 +2,35 @@
   "name": "io-flow",
   "version": "1.0.0",
   "description": "IO Flow is a software tool or system designed to automate and manage the flow of tasks, activities, and information within an organization or system. It serves as a central platform that orchestrates and coordinates the execution of business processes or workflows. The main purpose of a IO Flow is to streamline and optimize complex, repetitive, or time-sensitive processes, improving efficiency, productivity, and accuracy.",
-  "author": "Sudhir Raut <sudhir.raut@iauro.com>",
-  "private": true,
-  "license": "UNLICENSED",
+  "author": {
+    "name": "Sudhir Raut",
+    "email": "sudhir.raut@iauro.com",
+    "url": "https://github.com/sudhir-raut"
+  },
+  "private": false,
+  "license": "SEE LICENSE IN LICENSE.md",
+  "keywords": [
+    "io flow",
+    "workflow",
+    "iauro",
+    "engine",
+    "bpmn"
+  ],
+  "homepage": "https://github.com/iauroSystems/io-flow-core",
+  "bugs": {
+    "url": "https://github.com/iauroSystems/io-flow-core/issues",
+    "email": "sudhir.raut@iauro.com"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "LICENSE.md",
+    "main.ts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iauroSystems/io-flow-core.git"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -91,5 +117,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "engines": {
+    "node": ">= v18.13.0",
+    "npm": ">= v6.13.6"
   }
 }
