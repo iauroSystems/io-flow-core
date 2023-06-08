@@ -78,6 +78,7 @@ export class ProcessInstanceService {
       // If flow is started by the API call
       throw new CustomError(HttpStatus.BAD_REQUEST, error || 'Error in process definition');
     }
+
     await this.execute.startFlow(processInstance, processInstanceBody);
 
     // mark current task as complete
@@ -222,7 +223,9 @@ export class ProcessInstanceService {
    * @returns {Promise} - CustomError or CustomResponse, e.g. {statusCode: 400, message: "", error: {}}/{statusCode: 200, message: "", result: {}}
    */
   async getStatsByDefinitionKey(processDefinitionKey: string, query: GetProcessInstanceStatsQueryDto): Promise<CustomResponse | CustomError> {
-    let condition = { processDefinitionKey };
+    let condition = {
+      processDefinitionKey, ...(query.version && { version: query.version }),
+    };
     return this.getStats('processDefinitionKey', condition, query);
   }
 

@@ -442,7 +442,12 @@ export class Executor implements OnModuleInit {
             }
             const compiledWorkflow = this.compiler.compile(workflow, parentProcessInstance.rootProcessInstanceId, parentProcessInstance._id, parentTask._id);
             const childProcessInstance = await this.processInstanceRepositoryImpl.create(compiledWorkflow);
-            await this.startFlow(childProcessInstance, { parentProcessInstanceId: parentProcessInstance._id, parameters: { ...parentTask.parameters, ...parentProcessInstance.parameters } });
+            const [isValid, error, parameters] = this.validateParameters(parentTask.properties, parentTask?.parameters);
+            // if (!isValid && !payload?.parentProcessInstanceId) {
+            //     // If flow is started by the API call
+            //     throw new CustomError(HttpStatus.BAD_REQUEST, error);
+            // }
+            await this.startFlow(childProcessInstance, { parentProcessInstanceId: parentProcessInstance._id, parameters: { ...parameters, ...parentProcessInstance.parameters } });
             this.logger.debug(`Child process instantiated: Parent Instance [${parentProcessInstance.name}] -> Parent Task [${parentTask.name}] -> Current Instance [${childProcessInstance.name}]`)
             const condition = {
                 _id: parentProcessInstance._id,
@@ -473,13 +478,15 @@ export class Executor implements OnModuleInit {
         for (let field of properties) {
             let fieldData = parameters[field.key]
             if (fieldData === undefined) {
-                if (field?.value?.required === true || 'true') {
+                if (field.value.default !== undefined) {
+                    parameters[field.key] = field.value.default;
+                } else if (field?.value?.required === true || 'true') {
                     [isValid, error] = [false, `[${field.key}] must be present.`];
                     break
                 }
             }
             else if (field.value.type === 'object' && fieldData?.toString() === '[object Object]') {
-                [isValid, error] = this.validateParameters(field.value.properties, fieldData, `[${field.key}]`)
+                [isValid, error, parameters] = this.validateParameters(field.value.properties, fieldData, `[${field.key}]`)
             }
             else if (field.value.type == 'array' && Array.isArray(fieldData)) {
                 if (field.value.arrayOf == 'number' || 'string' || 'boolean') {
@@ -495,7 +502,7 @@ export class Executor implements OnModuleInit {
                 }
                 if (field.value.arrayOf == 'object') {
                     for (let index = 0; index < fieldData.length; index++) {
-                        [isValid, error] = this.validateParameters(field.value.properties, fieldData[index], `[${field.key}]`);
+                        [isValid, error, parameters] = this.validateParameters(field.value.properties, fieldData[index], `[${field.key}]`);
                         if (!isValid) {
                             break;
                         }
@@ -511,7 +518,7 @@ export class Executor implements OnModuleInit {
                 break;
             }
         }
-        return [isValid, `${_error}.${error}`];
+        return [isValid, `${_error}.${error}`, parameters];
 
     }
 
@@ -654,6 +661,7 @@ export class Executor implements OnModuleInit {
         this.logger.debug(`${processInstance.name} - [In function makeStageActive] ${task.name}:${task.status}`);
 
         if (task && processInstance) {
+            const valueReplacedProperties = await this.parseAndReplaceValue(JSON.stringify(task.properties), processInstance);
             const condition = {
                 _id: processInstance._id,
                 'stages._id': task._id
@@ -661,6 +669,7 @@ export class Executor implements OnModuleInit {
             const now = Date.now();
             let setValues = {
                 'stages.$.status': Constants.STAGE_STATUSES.ACTIVE,
+                'stages.$.properties': JSON.parse(valueReplacedProperties),
                 'stages.$.timeActivated': now,
                 ...(task.subType === Constants.STAGE_SUB_TYPES.TIMER && { 'stages.$.expToCompleteAt': now + task.estimatedTimeDuration }),
             };
@@ -669,6 +678,7 @@ export class Executor implements OnModuleInit {
                     status: task.status,
                     timeActivated: task.timeActivated,
                     parameters: task.parameters,
+                    properties: task.properties,
                     timeStarted: task.timeStarted,
                     timeCompleted: task.timeCompleted,
                     _flags: task._flags,
@@ -680,6 +690,7 @@ export class Executor implements OnModuleInit {
                         'stages.$.status': Constants.STAGE_STATUSES.ACTIVE,
                         'stages.$.timeActivated': now,
                         'stages.$.parameters': null,
+                        'stages.$.properties': task.properties,
                         'stages.$.timeStarted': -1,
                         'stages.$.timeCompleted': -1,
                         'stages.$._flags': {},
@@ -690,6 +701,7 @@ export class Executor implements OnModuleInit {
                     }
                 }
             }
+
             const response = await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
             let stage = response.stages[processInstance._stageIndexJSON[task.key]];
 
@@ -717,7 +729,8 @@ export class Executor implements OnModuleInit {
         let isValid = true;
         let status = Constants.STAGE_STATUSES.COMPLETED;
         let error = '';
-        [isValid, error] = this.validateParameters(task.properties, taskData?.parameters);
+        let parameters = {};
+        [isValid, error, parameters] = this.validateParameters(task.properties, taskData?.parameters);
         if (!isValid) {
             if (task.subType !== Constants.STAGE_SUB_TYPES.USER_TASK && task.auto) { // internal method call
                 this.logger.error(error);
@@ -726,6 +739,7 @@ export class Executor implements OnModuleInit {
                 throw new CustomError(HttpStatus.BAD_REQUEST, error);
             }
         }
+        parameters = { ...parameters, ...taskData?.parameters };
         [isValid, status] = this.validateCriteria(task.criteria || processInstance.criteria, task._flags);
 
         if (!isValid) {
@@ -760,7 +774,7 @@ export class Executor implements OnModuleInit {
             'stages._id': task._id
         }
         const setValues = {
-            'stages.$.parameters': taskData?.parameters,
+            'stages.$.parameters': parameters,
             'stages.$.status': status,
             'stages.$.timeCompleted': Date.now(),
             'stages.$._error': task._error,
@@ -936,7 +950,7 @@ export class Executor implements OnModuleInit {
                     break;
                 case Constants.STAGE_SUB_TYPES.SYSTEM_TASK:
                     if (task.auto) {
-                        this.makeTaskComplete(updatedInstance, task, updatedInstance.parameters);
+                        this.makeTaskComplete(updatedInstance, task);
                     }
                     break;
 
@@ -949,11 +963,11 @@ export class Executor implements OnModuleInit {
                             await this.createChildProcessInstance(updatedInstance, task);
                         }
                     } else {
-                        await this.makeTaskComplete(updatedInstance, task, 'system');
+                        await this.makeTaskComplete(updatedInstance, task);
                     }
                     break;
                 default:
-                    this.makeTaskComplete(updatedInstance, task, updatedInstance.parameters);
+                    this.makeTaskComplete(updatedInstance, task);
                     break;
             }
         }
@@ -966,11 +980,7 @@ export class Executor implements OnModuleInit {
      * @returns {promise}
      */
     async startFlow(processInstance, payload) {
-        // const [isValid, error] = this.validateParameters(processInstance.properties, payload?.parameters);
-        // if (!isValid && !payload?.parentProcessInstanceId) {
-        //     // If flow is started by the API call
-        //     throw new CustomError(HttpStatus.BAD_REQUEST, error);
-        // }
+
         const startStage = processInstance.stages[processInstance._startIndex];
         if (startStage.status === Constants.STAGE_STATUSES.STARTED) {
             if (payload?.parentProcessInstanceId) {
@@ -1103,7 +1113,7 @@ export class Executor implements OnModuleInit {
                 if (parentProcessInstance) {
                     let compoundTask = JSON.parse(JSON.stringify(parentProcessInstance.stages[0]));
                     compoundTask._flags = processInstance._flags;
-                    this.makeTaskComplete(parentProcessInstance, compoundTask, assignee);
+                    this.makeTaskComplete(parentProcessInstance, compoundTask, null, assignee);
                 }
 
             }

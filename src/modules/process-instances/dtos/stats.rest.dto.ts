@@ -18,4 +18,10 @@ export class GetProcessInstanceStatsQueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     readonly search: string;
+
+    @ApiPropertyOptional()
+    @IsNumber()
+    @IsOptional()
+    @Type(() => Number)
+    readonly version?: number;
 }
