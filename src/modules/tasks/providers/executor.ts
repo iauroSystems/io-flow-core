@@ -300,7 +300,7 @@ export class Executor implements OnModuleInit {
             const getInstance = await this.processInstanceRepositoryImpl.findOne({ _id: processInstance._id });
             const updated = await this.updateFlowFlagStatuses(getInstance);
             if (processInstance.status !== Constants.STAGE_STATUSES.COMPLETED) {
-                const [isValid, status] = this.validateCriteria(updated.criteria, updated._flags);
+                const [isValid] = this.validateCriteria(updated.criteria, updated._flags);
                 if (isValid) {
                     await this.makeFlowEnd(updated, updated.stages[updated._endIndex]);
                 }
@@ -341,8 +341,6 @@ export class Executor implements OnModuleInit {
             ...(!complete && { 'stages.$.status': Constants.STAGE_STATUSES.ACTIVE, 'stages.$.timeActivated': Date.now() }),
             'stages.$.conditions': gatewayConditions,
         }
-        this.logger.debug(`Evaluated gateway...`, setValues);
-
         await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
 
     }
@@ -373,8 +371,6 @@ export class Executor implements OnModuleInit {
             }).flat(Infinity).filter(stage => stage);
             const activeStages = processInstance.stages.map(_stage => {
                 const stage = JSON.parse(JSON.stringify(_stage));
-
-
                 if (stage.type === Constants.STAGE_TYPES.ACTIVITY && !skipStages.includes(stage.key)) {
 
                     const history = {
@@ -410,11 +406,10 @@ export class Executor implements OnModuleInit {
         } else {
             const condition = {
                 _id: processInstanceId,
-
             };
             const setValues = {
                 status: Constants.STAGE_STATUSES.ACTIVE,
-            }
+            };
             const response = await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
 
             this.iterateNextStages(response, response.stages[response._startIndex].nextStages);
@@ -457,7 +452,7 @@ export class Executor implements OnModuleInit {
             const setValues = {
                 'stages.$.processInstanceId': childProcessInstance['_id']
             }
-            const response = await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
+            await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
         } catch (err) {
             this.logger.error(`Error in creating child process instance for key [${parentTask.processDefinitionKey}] -> `, err);
         }
@@ -478,8 +473,8 @@ export class Executor implements OnModuleInit {
         for (let field of properties) {
             let fieldData = parameters[field.key]
             if (fieldData === undefined) {
-                if (field.value.default !== undefined) {
-                    parameters[field.key] = field.value.default;
+                if (field?.value?.default !== undefined) {
+                    parameters[field.key] = field?.value?.default;
                 } else if (field?.value?.required === true || 'true') {
                     [isValid, error] = [false, `[${field.key}] must be present.`];
                     break
@@ -812,11 +807,11 @@ export class Executor implements OnModuleInit {
         const condition = {
             _id: processInstanceId,
             'stages._id': task._id
-        }
+        };
         const setValues = {
             'stages.$.watchers': watchers
-        }
-        const response = await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
+        };
+        await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
         this.logger.log(`User Tasks updated for the task stage [${JSON.stringify(condition)}]`);
 
         const setValuesTask = { assignee, watchers };
@@ -1001,7 +996,7 @@ export class Executor implements OnModuleInit {
                     return obj.nextStage;
                 }
                 if (obj.type === Constants.STAGE_TYPES.GATEWAY) {
-                    return obj.conditions.map(cond => [cond.onTrueNextStage, cond.onFalseNextStage, obj.nextStage, obj.defaultNextStage]);
+                    return obj.conditions.map(cond => [cond.onTrueNextStage, ...obj.nextStages]);
                 }
             }).flat(Infinity).filter(stage => stage);
             const activeStages = processInstance.stages.map(_stage => {
@@ -1022,7 +1017,7 @@ export class Executor implements OnModuleInit {
             const setValues = {
                 parameters: payload?.parameters,
                 stages: activeStages,
-            }
+            };
             const response = await this.makeMultipleStagesActive(processInstance._id, setValues);
             this.iterateNextStages(response, response.stages[response._startIndex].nextStages);
             // this.goToNextStage(response, response.stages[response._startIndex].nextStage);
@@ -1072,12 +1067,11 @@ export class Executor implements OnModuleInit {
         const activeStage = processInstance.stages.find(obj => obj.status === Constants.STAGE_STATUSES.ACTIVE);
         if (activeStage) {
             const setValues = {
-
                 'stages.$.status': Constants.STAGE_STATUSES.COMPLETED,
                 'stages.$.timeCompleted': Date.now()
             };
 
-            const response = await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
+            await this.processInstanceRepositoryImpl.updateOne(condition, setValues);
             return;
         } else {
             const [isValid, status] = this.validateCriteria(processInstance.criteria, processInstance._flags);
@@ -1190,7 +1184,7 @@ export class Executor implements OnModuleInit {
         const getInstance = await this.processInstanceRepositoryImpl.findOne({ _id: processInstance._id });
         const updated = await this.updateFlowFlagStatuses(getInstance);
         if (processInstance.status !== Constants.STAGE_STATUSES.COMPLETED) {
-            const [isValid, status] = this.validateCriteria(updated.criteria, updated._flags);
+            const [isValid] = this.validateCriteria(updated.criteria, updated._flags);
             if (isValid) {
                 this.makeFlowEnd(updated, updated.stages[updated._endIndex]);
             }
@@ -1330,7 +1324,7 @@ export class Executor implements OnModuleInit {
             const connector = taskData?.connector;
 
             this.logger.debug(`[${connector.type}] connector called in saveParams `, connector);
-            const [err, data] = await this.callConnector(true, processInstance, connector);
+            await this.callConnector(true, processInstance, connector);
             // if (err) {
             //     this.logger.error(`[${connector.type}] connector error => `, connector);
             //     // task._flags['_error'] = true;
