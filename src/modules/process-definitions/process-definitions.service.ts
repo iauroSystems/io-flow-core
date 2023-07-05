@@ -11,6 +11,8 @@ import { Mappings } from 'src/common/const/BPMN-mappings';
 import { CommonHeadersDto } from 'src/shared/dtos';
 import { Compiler } from '../process-instances/providers';
 import { StagesSchema } from './joi-validations/create-process-definition.joi';
+import * as _ from 'lodash';
+import * as sanitize from 'sanitize-filename';
 
 const convert = require('xml-js');
 
@@ -209,7 +211,8 @@ export class ProcessDefinitionService {
         for (let key in search) {
           if (search.hasOwnProperty(key)) {
             let obj = {};
-            obj[key] = { $regex: new RegExp(search[key], 'i') }
+            const safeKey = _.escapeRegExp(search[key]);
+            obj[key] = { $regex: new RegExp(safeKey, 'i') }
             orCond.$or.push(obj);
           }
         }
@@ -281,8 +284,8 @@ export class ProcessDefinitionService {
    * @returns {Promise} - CustomError or CustomResponse, e.g. {statusCode: 400, message: "", error: {}}/{statusCode: 200, message: "", result: {}}
    */
   async uploadBPMNFile(headers: CommonHeadersDto, file) {
-
-    const xml = require('fs').readFileSync(`${Paths.BPMN_XML}/${file.originalname}`, 'utf8');
+    const filename = sanitize(file.originalname);
+    const xml = require('fs').readFileSync(`${Paths.BPMN_XML}/${filename}`, 'utf8');
     const options = { ignoreComment: true, alwaysChildren: true };
     const rawJson = convert.xml2js(xml, options); // or convert.xml2json(xml, options)
     const businessFlowJson = this.bpmnJsonToNativeJson(rawJson);
