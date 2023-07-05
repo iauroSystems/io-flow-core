@@ -125,6 +125,285 @@ export class Executor implements OnModuleInit {
         return path;
     }
 
+    checkEquality(lhsFinal: any, rhsFinal: any): boolean {
+        if (lhsFinal == rhsFinal) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    countObliqueIsTwo(str: string): boolean {
+        let oblique = '/';
+        let count = 0;
+        for (let i = 0; i < str.length; i++) {
+            if (str[i] == oblique) {
+                count++;
+            }
+        }
+        if (count == 2) {
+            return true;
+        }
+
+        return false;
+    }
+
+    countHyphenIsTwo(str: string): boolean {
+        let hyphen = '-';
+        let count = 0;
+        for (let i = 0; i < str.length; i++) {
+            if (str[i] == hyphen) {
+                count++;
+            }
+        }
+        if (count == 2) {
+            return true;
+        }
+
+        return false;
+    }
+
+    convertDateObjectToString(dateObject: Date): string {
+        let date: any = dateObject.getDate();
+        let month: any = dateObject.getMonth() + 1;
+        let year: any = dateObject.getFullYear();
+
+        date = date.toString();
+        if (date.length == 1) {
+            date = '0' + date;
+        }
+        month = month.toString();
+        if (month.length == 1) {
+            month = '0' + month;
+        }
+
+        year = year.toString();
+
+        let result = date + '/' + month + '/' + year;
+
+        return result;
+    }
+
+
+
+    isIsoDateString(str: string): boolean {
+        // The regular expression to match the ISO 8601 date string pattern
+        const isoDateRegex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+        // Test the string against the regular expression
+        return isoDateRegex.test(str);
+    }
+
+    formatDate(str: any): string {
+        str = new Date(str).toString();
+        let day: any = str.getDate();
+        let month: any = str.getMonth() + 1;
+        let year: any = str.getFullYear();
+        if (day < 10) {
+            day = day.toString();
+            day = '0' + day;
+        }
+        if (month < 10) {
+            month = month.toString();
+            month = '0' + month;
+        }
+
+        let formattedDate = `${day}/${month}/${year}`;
+
+        return formattedDate;
+    }
+
+
+
+    checkDates(lhs: any, rhs: any): boolean {
+        let lhsFinal: string | undefined;
+        let rhsFinal: string | undefined;
+        let typeLhs = typeof lhs;
+        let typeRhs = typeof rhs;
+
+        if (typeLhs === "object") {
+            lhsFinal = this.convertDateObjectToString(lhs);
+        }
+        if (typeLhs === "string") {
+            if (this.isIsoDateString(lhs)) {
+                lhsFinal = this.convertDateObjectToString(new Date(lhs));
+            } else {
+                if (lhs.length <= 10) {
+                    if (this.countObliqueIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    } else if (this.countHyphenIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    }
+                } else if (lhs.length > 10) {
+                    lhsFinal = this.formatDate(lhs);
+                }
+            }
+        }
+        if (typeLhs === "number") {
+            lhsFinal = this.convertDateObjectToString(new Date(lhs));
+        }
+
+        if (typeRhs === "object") {
+            rhsFinal = this.convertDateObjectToString(rhs);
+        }
+        if (typeRhs === "string") {
+            if (this.isIsoDateString(rhs)) {
+                rhsFinal = this.convertDateObjectToString(new Date(rhs));
+            } else {
+                if (rhs.length <= 10) {
+                    if (this.countObliqueIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    } else if (this.countHyphenIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    }
+                } else if (rhs.length > 10) {
+                    rhsFinal = this.formatDate(rhs);
+                    console.log("rhsFinal :: ", rhsFinal);
+                }
+            }
+        }
+
+        if (typeRhs === "number") {
+            rhsFinal = this.convertDateObjectToString(new Date(rhs));
+        }
+        console.log("lhsFinal---::", lhsFinal);
+        console.log("rhsFinal---::", rhsFinal);
+
+        return this.checkEquality(rhsFinal, lhsFinal);
+    }
+
+
+    lessThanCheck(lhs: any, rhs: any): boolean {
+        const lhsDate = new Date(lhs);
+        const rhsDate = new Date(rhs);
+
+        return lhsDate.getTime() < rhsDate.getTime();
+    }
+
+    greaterThanCheck(lhs: any, rhs: any): boolean {
+        const lhsDate = new Date(lhs);
+        const rhsDate = new Date(rhs);
+
+        return lhsDate.getTime() > rhsDate.getTime();
+    }
+
+    lessThanDate(lhs: any, rhs: any): boolean {
+        let lhsFinal: string | undefined;
+        let rhsFinal: string | undefined;
+        let typeLhs = typeof lhs;
+        let typeRhs = typeof rhs;
+
+        if (typeLhs === "object") {
+            lhsFinal = this.convertDateObjectToString(lhs);
+        }
+        if (typeLhs === "string") {
+            if (this.isIsoDateString(lhs)) {
+                lhsFinal = this.convertDateObjectToString(new Date(lhs));
+            } else {
+                if (lhs.length <= 10) {
+                    if (this.countObliqueIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    } else if (this.countHyphenIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    }
+                } else if (lhs.length > 10) {
+                    lhsFinal = this.formatDate(lhs);
+                }
+            }
+        }
+        if (typeLhs === "number") {
+            lhsFinal = this.convertDateObjectToString(new Date(lhs));
+        }
+
+        if (typeRhs === "object") {
+            rhsFinal = this.convertDateObjectToString(rhs);
+        }
+        if (typeRhs === "string") {
+            if (this.isIsoDateString(rhs)) {
+                rhsFinal = this.convertDateObjectToString(new Date(rhs));
+            } else {
+                if (rhs.length <= 10) {
+                    if (this.countObliqueIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    } else if (this.countHyphenIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    }
+                } else if (rhs.length > 10) {
+                    rhsFinal = this.formatDate(rhs);
+                    console.log("rhsFinal :: ", rhsFinal);
+                }
+            }
+        }
+
+        if (typeRhs === "number") {
+            rhsFinal = this.convertDateObjectToString(new Date(rhs));
+        }
+        console.log("lhsFinal---::", lhsFinal);
+        console.log("rhsFinal---::", rhsFinal);
+
+        return this.lessThanCheck(lhsFinal, rhsFinal);
+
+    }
+
+    greaterThanDate(lhs: any, rhs: any): boolean {
+        let lhsFinal: string | undefined;
+        let rhsFinal: string | undefined;
+        let typeLhs = typeof lhs;
+        let typeRhs = typeof rhs;
+
+        if (typeLhs === "object") {
+            lhsFinal = this.convertDateObjectToString(lhs);
+        }
+        if (typeLhs === "string") {
+            if (this.isIsoDateString(lhs)) {
+                lhsFinal = this.convertDateObjectToString(new Date(lhs));
+            } else {
+                if (lhs.length <= 10) {
+                    if (this.countObliqueIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    } else if (this.countHyphenIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    }
+                } else if (lhs.length > 10) {
+                    lhsFinal = this.formatDate(lhs);
+                }
+            }
+        }
+        if (typeLhs === "number") {
+            lhsFinal = this.convertDateObjectToString(new Date(lhs));
+        }
+
+        if (typeRhs === "object") {
+            rhsFinal = this.convertDateObjectToString(rhs);
+        }
+        if (typeRhs === "string") {
+            if (this.isIsoDateString(rhs)) {
+                rhsFinal = this.convertDateObjectToString(new Date(rhs));
+            } else {
+                if (rhs.length <= 10) {
+                    if (this.countObliqueIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    } else if (this.countHyphenIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    }
+                } else if (rhs.length > 10) {
+                    rhsFinal = this.formatDate(rhs);
+                    console.log("rhsFinal :: ", rhsFinal);
+                }
+            }
+        }
+
+        if (typeRhs === "number") {
+            rhsFinal = this.convertDateObjectToString(new Date(rhs));
+        }
+        console.log("lhsFinal---::", lhsFinal);
+        console.log("rhsFinal---::", rhsFinal);
+
+        return this.greaterThanCheck(lhsFinal, rhsFinal);
+
+    }
+
+
     // evaluate the conditions and return the same array
     /**
      * 
@@ -151,6 +430,10 @@ export class Executor implements OnModuleInit {
                     expression._lhs = valA;
                     expression._rhs = valB;
 
+                    let dateAreEqual = this.checkDates(expression._lhs, expression._rhs);
+                    let lessThanDate = this.lessThanDate(expression._lhs, expression._rhs);
+                    let greaterThanDate=this.greaterThanDate(expression._lhs,expression._rhs);
+
                     // both the values can not be undefined
                     if (valA === undefined && valB === undefined) {
                         throw new Error(`Condition [${condition.name}] expression [${JSON.stringify(expression)}] have [lhs] and [rhs] values as [undefined]!`);
@@ -158,6 +441,16 @@ export class Executor implements OnModuleInit {
 
                     if (op === undefined) {
                         throw new Error(`Condition [${condition.name}] expression [${JSON.stringify(expression)}] has no operator property set!`);
+                    }
+
+                    if (dateAreEqual === false) {
+                        if(lessThanDate==true){
+                            console.log('lhs<rhs')
+                        }
+                        else if(greaterThanDate==true){
+                            console.log('lhs>rhs')
+                        }
+                       
                     }
 
                     // //Check if value is Not a number, if so JSON.Stringify it to make a 'simple' object comparison
