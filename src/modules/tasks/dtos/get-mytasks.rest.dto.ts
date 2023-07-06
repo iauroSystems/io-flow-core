@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Length } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -53,6 +53,7 @@ export class GetMyTasksHeadersDto {
 export class GetMyTasksParamsDto {
     @IsString()
     @ApiPropertyOptional()
+    @Length(24, 24)
     readonly processInstanceId: string;
 }
 

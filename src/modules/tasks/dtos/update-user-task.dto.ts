@@ -13,6 +13,7 @@ import {
   IsNumber,
   IsOptional,
   IsIn,
+  Length,
 } from 'class-validator'
 
 class PropertiesDto {
@@ -47,10 +48,12 @@ class Params {
 export class ReAssignTaskBody {
   @ApiProperty()
   @IsOptional()
+  @Length(24, 24)
   taskId: string;
 
   @ApiProperty()
   @IsOptional()
+  @Length(1, 24)
   taskKey: string;
 
   @ApiProperty()

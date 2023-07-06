@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
-  IsOptional, isString, IsString
+  IsOptional, isString, IsString, Length
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ConnectorTypes, InputStatuses } from 'src/common/const/enums';
@@ -13,10 +13,12 @@ class Params {
 export class CompleteTaskBody {
   @ApiProperty()
   @IsOptional()
+  @Length(24, 24)
   taskId: string;
 
   @ApiProperty()
   @IsOptional()
+  @Length(1, 24)
   taskKey: string;
 
   @ApiProperty({ type: String, default: '' })
@@ -33,6 +35,7 @@ export class CompleteTaskBody {
 export class CompleteTaskParams {
   @ApiProperty()
   @IsString()
+  @Length(24, 24)
   processInstanceId: string;
 
 }

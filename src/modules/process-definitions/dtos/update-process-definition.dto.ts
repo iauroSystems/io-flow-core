@@ -14,6 +14,7 @@ import {
   IsOptional,
   IsIn,
   IsEnum,
+  Length,
 } from 'class-validator'
 
 import { Type } from 'class-transformer';
@@ -120,6 +121,7 @@ class Condition {
 
 
 export class StageDefinition {
+  @Length(1, 24)
   @ApiProperty({ type: String })
   key: string;
 
@@ -183,7 +185,13 @@ export class StageDefinition {
 
   @ApiProperty({ type: String })
   @IsOptional()
+  @Length(24, 24)
   processDefinitionId?: string;
+
+  @ApiProperty({ type: String })
+  @IsOptional()
+  @Length(1, 24)
+  processDefinitionKey?: string;
 }
 
 

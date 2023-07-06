@@ -13,7 +13,7 @@ import { Executor } from './providers/executor';
 import { CommonHeadersDto } from 'src/shared/dtos';
 import { GetProcessInstanceStatsQueryDto } from '../process-instances/dtos';
 import { InputStatuses } from 'src/common/const/enums';
-
+import * as _ from 'lodash';
 @Injectable()
 export class TasksService {
   private readonly logger: Logger = new Logger(TasksService.name);
@@ -234,7 +234,8 @@ export class TasksService {
         for (let key in search) {
           if (search.hasOwnProperty(key)) {
             let obj = {};
-            obj[key] = { $regex: new RegExp(search[key], 'i') }
+            const safeKey = _.escapeRegExp(search[key]);
+            obj[key] = { $regex: new RegExp(safeKey, 'i') }
             orCond.$or.push(obj);
           }
         }
@@ -301,7 +302,8 @@ export class TasksService {
         for (let key in search) {
           if (search.hasOwnProperty(key)) {
             let obj = {};
-            obj[key] = { $regex: new RegExp(search[key], 'i') }
+            const safeKey = _.escapeRegExp(search[key]);
+            obj[key] = { $regex: new RegExp(safeKey, 'i') }
             orCond.$or.push(obj);
           }
         }
@@ -371,7 +373,8 @@ export class TasksService {
         for (let key in search) {
           if (search.hasOwnProperty(key)) {
             let obj = {};
-            obj[key] = { $regex: new RegExp(search[key], 'i') }
+            const safeKey = _.escapeRegExp(search[key]);
+            obj[key] = { $regex: new RegExp(safeKey, 'i') }
             orCond.$or.push(obj);
           }
         }
