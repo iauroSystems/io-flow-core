@@ -42,26 +42,28 @@ export class Executor implements OnModuleInit {
         processInstance['user'] = this.request.headers.authorization;
         processInstance['admin'] = this.request.headers['admin-authorization'];
         const regex = /\$\[(.*?)\]\$?/; // match substrings starts with $[ and ends with ]
-        let match = dataString.match(regex);
-        while (match !== null) {
-            let replacePattern = match[0];
-            let path = match[0];
-            if (match[0].endsWith('$')) {
-                path = match[0].slice(0, -1);
-                replacePattern = `"${match[0]}"`;
-            }
-            let value = await this.valueLocator(processInstance, path);
+        if (dataString.length <= 2000) {
+            let match = dataString.match(regex);
+            while (match !== null) {
+                let replacePattern = match[0];
+                let path = match[0];
+                if (match[0].endsWith('$')) {
+                    path = match[0].slice(0, -1);
+                    replacePattern = `"${match[0]}"`;
+                }
+                let value = await this.valueLocator(processInstance, path);
 
-            if (value === null) {
-                replacePattern = `"${match[0]}"`;
-            }
-            if (typeof value === 'object') {
-                replacePattern = `"${match[0]}"`;
-                value = JSON.stringify(value);
-            }
-            dataString = dataString.replaceAll(replacePattern, value);
+                if (value === null) {
+                    replacePattern = `"${match[0]}"`;
+                }
+                if (typeof value === 'object') {
+                    replacePattern = `"${match[0]}"`;
+                    value = JSON.stringify(value);
+                }
+                dataString = dataString.replaceAll(replacePattern, value);
 
-            match = dataString.match(regex);
+                match = dataString.match(regex);
+            }
         }
         return dataString;
     }

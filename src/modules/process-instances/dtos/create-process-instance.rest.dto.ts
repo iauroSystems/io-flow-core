@@ -14,7 +14,8 @@ import {
   IsNumber,
   IsOptional,
   IsIn,
-  IsEnum
+  IsEnum,
+  Min
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -35,6 +36,7 @@ export class GetOneProcessInstanceQueryDto {
   @ApiPropertyOptional()
   @IsNumber()
   @IsOptional()
+  @Min(1)
   @Type(() => Number)
   readonly version: number;
 

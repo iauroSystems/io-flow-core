@@ -14,7 +14,7 @@ import { Webhooks } from 'src/common/const/enums';
 import { CommonHeadersDto } from 'src/shared/dtos';
 import * as moment from 'moment';
 import { Types } from 'mongoose';
-
+import * as _ from 'lodash';
 @Injectable()
 export class ProcessInstanceService {
   private readonly logger: Logger = new Logger(ProcessInstanceService.name);
@@ -165,7 +165,8 @@ export class ProcessInstanceService {
         for (let key in search) {
           if (search.hasOwnProperty(key)) {
             let obj = {};
-            obj[key] = { $regex: new RegExp(search[key], 'i') }
+            const safeKey = _.escapeRegExp(search[key]);
+            obj[key] = { $regex: new RegExp(safeKey, 'i') }
             orCond.$or.push(obj);
           }
         }
@@ -258,7 +259,8 @@ export class ProcessInstanceService {
         for (let key in search) {
           if (search.hasOwnProperty(key)) {
             let obj = {};
-            obj[key] = { $regex: new RegExp(search[key], 'i') }
+            const safeKey = _.escapeRegExp(search[key]);
+            obj[key] = { $regex: new RegExp(safeKey, 'i') }
             orCond.$or.push(obj);
           }
         }

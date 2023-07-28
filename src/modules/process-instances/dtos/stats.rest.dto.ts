@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -22,6 +22,7 @@ export class GetProcessInstanceStatsQueryDto {
     @ApiPropertyOptional()
     @IsNumber()
     @IsOptional()
+    @Min(1)
     @Type(() => Number)
     readonly version?: number;
 }
