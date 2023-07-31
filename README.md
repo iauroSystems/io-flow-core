@@ -1,110 +1,158 @@
-# IO Flow
+# Flask Script Executor
 
-A IO Flow is a software tool or system designed to automate and manage the flow of tasks, activities, and information within an organization or system. It serves as a central platform that orchestrates and coordinates the execution of business processes or workflows. The main purpose of a IO Flow is to streamline and optimize complex, repetitive, or time-sensitive processes, improving efficiency, productivity, and accuracy.
+The Flask Script Executor is a web service that securely executes Python scripts and functions. It provides two routes to handle script execution and function invocation.
 
-At its core, a IO Flow provides a framework for defining, modeling, and executing workflows. It typically includes the following key components:
+## Features
 
-### Workflow Design:
-The IO Flow allows users to create or define workflows using a graphical user interface or other modeling tools. Workflows can be represented as a series of interconnected tasks, activities, or steps, along with the associated dependencies, conditions, and rules.
-### Workflow Execution:
-Once a workflow is defined, the engine is responsible for executing it according to the specified logic and rules. It manages the sequencing, coordination, and allocation of tasks to the appropriate individuals or systems involved in the workflow. This may involve triggering events, assigning tasks, and monitoring progress.
-### Task Management:
-The IO Flow tracks the status and progress of individual tasks within the workflow. It ensures that tasks are assigned to the right participants, monitors their completion, and handles exceptions or errors that may occur during task execution.
-### Rules and Conditions:
-IO Flow often incorporate rule engines or decision management systems to enable the enforcement of business rules and conditions. These rules can be used to control the flow of the workflow, make decisions, validate inputs, and ensure compliance with business policies.
-### Integration:
-A IO Flow can integrate with various external systems, databases, or applications to gather inputs, retrieve or update data, and trigger actions. This enables seamless communication and interaction between the IO Flow and other systems involved in the workflow.
-### Monitoring and Analytics:
-IO Flow provide real-time monitoring and reporting capabilities, allowing stakeholders to track the progress, performance, and key metrics of workflows. Analytics features may include dashboards, visualizations, and data-driven insights to identify bottlenecks, optimize processes, and make informed decisions.
+- Secure execution of Python script code
+- Detection of dangerous function calls and module imports
+- Installation of required modules using pip
+- Support for direct code execution or script file upload
 
-By employing a IO Flow, organizations can automate and streamline their business processes, reducing manual effort, minimizing errors, and enhancing operational efficiency. Workflows can be customized, adapted, and scaled as needed, enabling organizations to respond to changing requirements and improve their overall productivity and agility.
 
-## Getting Started
+## Routes
+----------------
 
-These instructions will get you a service up and running on your local machine for development and testing purposes. 
-## How to build & deploy
-### Configuration
-Following are the environment variables required to pass for the deployment 
+### `/execute/run`
 
-```
-NODE_ENV
-TCP_PORT=3000
-GRPC_HOST=localhost
-GRPC_PORT=4000
-MONGO_PROTOCOL=mongodb
-MONGO_HOST=localhost
-MONGO_PORT=27017
-MONGO_USER=
-MONGO_PASS=
-MONGO_DBNAME=workflowEngine
-SWAGGER_TITLE= IO Flow API Documentation
-SWAGGER_DESC=This documentation is only for the REST APIs
-SWAGGER_VERSION=1.0
-SWAGGER_TAG
-SWAGGER_BASEPATH
-SWAGGER_DOC_PATH=api/documentation
-APP_BASEPATH=v1
+This route accepts a POST request with a JSON payload containing the Python script code to execute. The script is executed securely by parsing the code using the `ast` module and checking for any dangerous operations. The result of the script execution is returned as a JSON response.
 
+- Request Body: JSON or form-data containing the script code.
+  - For JSON request, provide the script code in the `script` field.
+  - For form-data request, provide the script code in a file named `file`.
+- Response: JSON containing the result of script execution or any error encountered.
+
+To execute Python script code securely, you have two options:
+
+1. Direct Code Execution: Make a `POST` request to the /execute/run endpoint with the script code in the request body as JSON.
+
+2. You can also add any file link to the `script` field and specify if params there in `params` field
+
+3. You can also specify the module to be installed inside the deployed environment by using the `pip` field and add flags to it to install or uninstall the library/ package
+
+
+**Example Request for Script:**
+
+```http
+POST /execute/run
+Content-Type: application/json
+
+{
+  "script": "print('Hello, World!')",
+  "parameters": "", // Here pass the parameters if you want to execute the script with parameters
+  "pip": "" //Here pass if we need to install or delete any module inside the deployed environment
+}
 ```
 
-### Deployment
-#### Local Development
 
-1. Install Node.js: Ensure that Node.js is installed on your local machine. [How to install?](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+**Example Response:**
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
 
-2. Install Nestjs
-```
- npm install -g @nestjs/cli
-```
-
-3. Install dependencies
-```
- npm i
+{
+  "result": "Hello, World!"
+}
 ```
 
-4. Build and Run Locally: Build your NestJS application using the command ``` npm run build ```, then start the application using ``` export NODE_ENV=development && npm run start:dev ``` or ``` npm run start:prod ```.
+**Example Request for Script with Parameters:**
 
-#### Containerization (Docker)
+```http
+POST /execute/run
+Content-Type: application/json
 
-Install Docker: Install Docker on your local machine or the target server.
+{
+  "script": "def custom(a, b): return a + b;",
+  "params": [3,2] // Here pass the parameters if you want to execute the script with parameters
+  "pip": "" //Here pass if we need to install or delete any module inside the deployed environment
+}
+```
 
-Create Dockerfile: Create a Dockerfile in the root directory of your NestJS application. The Dockerfile specifies the necessary dependencies and commands to build your application image.
 
-Build Docker Image: Use the command docker ``` build -t my-app ``` . to build a Docker image of your NestJS application.
+**Example Response:**
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
 
-Run Docker Container: Start a Docker container using the built image with the command ``` docker run -d -p 3000:3000 my-app ```. Adjust the port number if your application uses a different port.
+{
+  "result": "5"
+}
+```
 
-#### Cloud-based Deployments
 
-Cloud Platforms: Choose a cloud provider such as AWS, Azure, Google Cloud, or Heroku.
+**Example Request for Package Installation:**
 
-Set Up Cloud Account: Create an account and set up the necessary credentials and permissions.
+` -i ` ----> for install
+` -u ` ----> for uninstall
 
-Deploy to Cloud: Each cloud provider has its own deployment process and tools. Typically, you need to configure a deployment pipeline, define the necessary environment variables, and specify the deployment instructions (e.g., using Infrastructure as Code or cloud-specific deployment mechanisms).
+```http
+POST /execute/run
+Content-Type: application/json
 
-#### Continuous Integration and Deployment (CI/CD)
+{
+  "script": "",
+  "parameters": [] // Here pass the parameters if you want to execute the script with parameters
+  "pip": "-i numpy" 
+}
+```
 
-CI/CD Tools: Utilize popular CI/CD tools like Jenkins, GitLab CI/CD, CircleCI, or Travis CI.
 
-Configure CI/CD Pipeline: Set up a pipeline that automatically builds and deploys your NestJS application whenever changes are pushed to the repository. Define the necessary build steps, testing, and deployment instructions.
+**Example Response:**
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
 
-Please note that the specific steps and commands may vary depending on your environment, preferences, and deployment targets. It's always a good practice to consult the official documentation for the tools and platforms you choose to ensure accurate and up-to-date information.
+{
+  "result": "Library Installation Successfully"
+}
+```
+
+
+
+## Requirements
+--------------------
+
+    1. Python 3.6+
+    2. Flask
+    3. RestrictedPython
+
+
+## Error Handling
+
+- If any dangerous operations are detected in the code, an exception is raised.
+- If the required modules cannot be installed, an exception is raised.
+- If any errors occur during script execution, the error message is returned.
+
+
+## Installation
+--------------------
+
+1. Clone the repository: `git clone <repository_url>`
+
+2. Install all dependencies: `pip install -r requirements.txt`
+
+
+### Usage
+
+1. Run the flask app: `flask run`
+
+2. Send HTTP requests to the appropriate endpoints as described above.
+
+
+## Security Considerations
+-----------------------
+
+The script execution is performed in a restricted environment using the `ast` module to parse the code and check for dangerous operations. Dangerous functions and module imports are explicitly disallowed. However, it's important to thoroughly review and validate any code executed in this service to ensure security.
+
 ## Authors
 
-- [Sudhir Raut](https://github.com/sudhir-raut)
+- Created by: Atharva Arjun
+- Updated by: Atharva Arjun
 
-## Contributing to IO Flow
-
-Follow the [contributing guidelines](CONTRIBUTING.md) if you want to propose a change in the IO Flow core.
-
-### Reporting Issues
-
-If you experience or witness any unacceptable behavior while interacting with our project, please report it to the project maintainers by contacting [sudhir.raut@iauro.com]. All reports will be kept confidential.
-
-## Code of Conduct
-
-We are committed to providing a friendly, safe, and welcoming environment for all contributors and participants. Please review our [Code of Conduct](CODE_OF_CONDUCT.md) to understand our expectations for behavior.
 
 ## License
+-----------------------
 
-IO Flow is licensed under the free License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+Feel free to customize and expand this README to provide more information about your specific use case and any additional functionality or features of your Flask app.

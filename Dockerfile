@@ -1,51 +1,16 @@
-###################
-# BUILD FOR LOCAL DEVELOPMENT
-###################
+FROM python:3.9
 
-FROM node:18-alpine As development
+# Create app directory
+WORKDIR /app
 
-WORKDIR /usr/src/app
+# Install app dependencies
+COPY requirements.txt .
 
-COPY --chown=node:node package*.json ./
+RUN pip install -r requirements.txt
 
-RUN npm ci
+# Bundle app source
+COPY . .
 
-COPY --chown=node:node . .
+EXPOSE 5000
 
-USER node
-
-###################
-# BUILD FOR PRODUCTION
-###################
-
-FROM node:18-alpine As build
-
-WORKDIR /usr/src/app
-
-COPY --chown=node:node package*.json ./
-
-COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
-
-COPY --chown=node:node . .
-
-RUN npm run build
-
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-
-RUN npm ci --only=production && npm cache clean --force
-
-USER node
-
-###################
-# PRODUCTION
-###################
-
-FROM node:18-alpine As production
-
-COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
-COPY --chown=node:node --from=build /usr/src/app/dist ./dist
-
-ENV NODE_OPTIONS --max-old-space-size=4096
-
-CMD [ "node","--max_old_space_size=4096", "dist/main.js" ]
+CMD [ "flask", "run","--host","0.0.0.0","--port","5000"]

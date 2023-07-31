@@ -1,6 +1,0 @@
-export * from './process-instance.dto'
-export * from './get-process-instances.rest.dto'
-export * from './update-process-instance.dto'
-export * from './create-process-instance.rest.dto'
-export * from './start-process-instance.rest.dto'
-export * from './stats.rest.dto'
