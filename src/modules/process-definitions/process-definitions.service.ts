@@ -12,7 +12,7 @@ import { CommonHeadersDto } from 'src/shared/dtos';
 import { Compiler } from '../process-instances/providers';
 import { StagesSchema } from './joi-validations/create-process-definition.joi';
 import * as _ from 'lodash';
-import * as sanitize from 'sanitize-filename';
+import sanitize from 'sanitize-filename';
 
 const convert = require('xml-js');
 
@@ -79,6 +79,9 @@ export class ProcessDefinitionService {
    * @returns {undefined/string} - Error, e.g. "Error for key [k1] and subType [user-task] : [Invalid datatype]"
    */
   private async validateStages(createProcessDefinitionDto: CreateProcessDefinitionDto) {
+    if (!createProcessDefinitionDto.stages.length) {
+      return `The stages array must have at least one element.`;
+    }
     for (let i = 0; i < createProcessDefinitionDto.stages.length; i++) {
       const stage = createProcessDefinitionDto.stages[i];
       const stageSubType = stage.subType;
@@ -180,7 +183,7 @@ export class ProcessDefinitionService {
       ...(stage.assignee?.length && { 'stages.$.assignee': stage.assignee }),
       ...(stage.criteria && { 'stages.$.criteria': stage.criteria }),
       ...(stage.connector && { 'stages.$.connector': stage.connector }),
-      ...(stage.nextStage && { 'stages.$.nextStage': stage.nextStage }),
+      ...(stage.nextStages && { 'stages.$.nextStages': stage.nextStages }),
       ...(stage.type && { 'stages.$.type': stage.type }),
       ...(stage.subType && { 'stages.$.subType': stage.subType })
     };
@@ -232,7 +235,7 @@ export class ProcessDefinitionService {
     }
 
     const count = await this.processDefinitionRepositoryImpl.count(condition);
-    const data = await this.processDefinitionRepositoryImpl.find(condition, {}, query.page, query.size);
+    const data = await this.processDefinitionRepositoryImpl.find(condition, {}, query.page, query.size, sort || { $natural: -1 });
     return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, { count, data });
   }
 

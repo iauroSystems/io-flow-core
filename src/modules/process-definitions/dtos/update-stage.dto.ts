@@ -3,7 +3,8 @@ import {
     IsArray,
     IsEnum,
     IsOptional,
-    IsString
+    IsString,
+    Length
 } from 'class-validator'
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
 
@@ -11,10 +12,12 @@ import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enum
 export class UpdateStageParams {
     @ApiPropertyOptional()
     @IsString()
+    @Length(24, 24)
     processDefinitionId: string;
 
     @ApiPropertyOptional()
     @IsString()
+    @Length(24, 24)
     stageId: string;
 }
 
@@ -52,31 +55,7 @@ class Property {
     value: PropertyType
 }
 
-class Criteria {
-    @ApiProperty({ default: true })
-    @IsOptional()
-    allCompleted: boolean;
-
-    @ApiProperty({ default: false })
-    @IsOptional()
-    anyCompleted: boolean;
-
-    @ApiProperty({ default: true })
-    @IsOptional()
-    allActivitiesCompleted: boolean;
-
-    @ApiProperty({ default: false })
-    @IsOptional()
-    anyActivitiesCompleted: boolean;
-
-    @ApiProperty({ default: false })
-    @IsOptional()
-    allSuccess: boolean;
-
-    @ApiProperty({ default: false })
-    @IsOptional()
-    anySuccess: boolean;
-
+class StageCriteria {
     @ApiProperty({ default: true })
     @IsOptional()
     onErrorComplete: boolean;
@@ -148,9 +127,8 @@ export class UpdateStageBody {
     @IsOptional()
     disabled?: boolean; // disable stage
 
-    @ApiProperty({ type: String, default: '' })
-    @IsOptional()
-    nextStage?: string;
+    @ApiProperty({ type: [String], default: [] })
+    nextStages: string[];
 
     @IsArray()
     @ApiProperty({ type: [Property] })
@@ -167,9 +145,9 @@ export class UpdateStageBody {
     @IsOptional()
     assignee?: string;
 
-    @ApiProperty({ type: Criteria })
+    @ApiProperty({ type: StageCriteria })
     @IsOptional()
-    criteria?: Criteria;
+    criteria?: StageCriteria;
 
     @ApiProperty({ type: Connector })
     @IsOptional()
@@ -177,5 +155,6 @@ export class UpdateStageBody {
 
     @ApiProperty({ type: String })
     @IsOptional()
+    @Length(24, 24)
     processDefinitionId?: string;
 }
