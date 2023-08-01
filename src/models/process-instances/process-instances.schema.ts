@@ -13,47 +13,25 @@ class Dependency extends Document {
   stageKey: string;
 }
 
-class Expression extends Document {
-  @Prop()
-  lhs: SchemaTypes.Types.Mixed;
-
-  @Prop()
-  op: string;
-
-  @Prop()
-  rhs: SchemaTypes.Types.Mixed
-
-  @Prop()
-  _lhs: SchemaTypes.Types.Mixed;
-
-  @Prop()
-  _rhs: SchemaTypes.Types.Mixed
-
-  @Prop()
-  _valid: boolean;
-}
 
 class Condition extends Document {
   @Prop()
   name: string;
 
   @Prop()
-  op: string;
+  expression: string;
 
-  @Prop({ type: [Expression] })
-  expressions: Expression[]
-
-  @Prop()
-  _allValid: boolean;
+  @Prop( { type: {} } )
+  expVariables: {};
 
   @Prop()
-  _anyValid: boolean;
+  _valid: boolean;
 
   @Prop()
   onTrueNextStage: string;
 
   @Prop()
-  onFalseNextStage: string
+  onFalseNextStage: string;
 }
 
 class Params extends Document {

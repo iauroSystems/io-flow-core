@@ -7,32 +7,24 @@ export type ProcessDefinitionDocument = ProcessDefinition & Document;
 
 class CompiledDefinition { }
 
-class Expression {
-  @Prop()
-  lhs: SchemaTypes.Types.Mixed;
-
-  @Prop()
-  op: string;
-
-  @Prop()
-  rhs: SchemaTypes.Types.Mixed
-}
-
 class Condition {
   @Prop()
   name: string;
 
   @Prop()
-  op: string;
+  expression: string;
 
-  @Prop({ type: [Expression] })
-  expressions: Expression[]
+  @Prop( { type: {} } )
+  expVariables: {};
+
+  @Prop()
+  _valid: boolean;
 
   @Prop()
   onTrueNextStage: string;
 
   @Prop()
-  onFalseNextStage: string
+  onFalseNextStage: string;
 }
 
 class PropertyType {

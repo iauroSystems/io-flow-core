@@ -30,20 +30,13 @@ const connectorGrpcSchema = Joi.object({
     }).required()
 });
 
-const expressionSchema = Joi.object({
-    lhs: Joi.string().required(),
-    op: Joi.string().valid('==', '!=', '>', '<', '>=', '<=', '===').required(),
-    // rhs: Joi.alternatives().try( Joi.string(), Joi.boolean(), Joi.number() ).required(),
-    rhs: Joi.any().required(),
-});
-
-const conditionSchema = Joi.object({
+const conditionSchema = Joi.object( {
     name: Joi.string().required(),
-    op: Joi.string().valid('and', 'or').insensitive().required(),
-    expressions: Joi.array().items(expressionSchema).required(),
+    expVariables: Joi.object().required(),
+    expression: Joi.string().required(),
     onTrueNextStage: Joi.string().optional(),
     onFalseNextStage: Joi.string().optional(),
-});
+} );
 
 const criteriaSchema = Joi.object({
     allCompleted: Joi.boolean().optional(),

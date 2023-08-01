@@ -12,7 +12,7 @@ import { CommonHeadersDto } from 'src/shared/dtos';
 import { Compiler } from '../process-instances/providers';
 import { StagesSchema } from './joi-validations/create-process-definition.joi';
 import * as _ from 'lodash';
-import * as sanitize from 'sanitize-filename';
+import sanitize from 'sanitize-filename';
 
 const convert = require('xml-js');
 

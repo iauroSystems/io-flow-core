@@ -134,121 +134,40 @@ export class Executor implements OnModuleInit {
      * @param gateway {object} - gateway stage object
      * @returns {object} - returns an array with evaluated conditions
      */
-    conditionEvaluator(processInstance, gateway) {
-
+    conditionEvaluator ( processInstance, gateway ) {
         try {
             //get the conditions
-            return gateway.conditions.map(async condition => {
+            return gateway.conditions.map( async condition => {
 
-                condition._anyValid = false;
-                condition._allValid = true
-                condition.expressions = await Promise.all(condition.expressions.map(async expression => {
+                const expVariables = condition.expVariables;
+                const expVariableKeys = Object.keys( expVariables );
 
-                    //break out the condition
-                    let valA = await this.valueLocator(processInstance, expression.lhs, gateway);
-                    let valB = await this.valueLocator(processInstance, expression.rhs, gateway);
-                    let op = expression.op;
-
-                    // replaced values
-                    expression._lhs = valA;
-                    expression._rhs = valB;
-
-                    // both the values can not be undefined
-                    if (valA === undefined && valB === undefined) {
-                        throw new Error(`Condition [${condition.name}] expression [${JSON.stringify(expression)}] have [lhs] and [rhs] values as [undefined]!`);
-                    }
-
-                    if (op === undefined) {
-                        throw new Error(`Condition [${condition.name}] expression [${JSON.stringify(expression)}] has no operator property set!`);
-                    }
-
-                    // //Check if value is Not a number, if so JSON.Stringify it to make a 'simple' object comparison
-                    // //dangerous in code, but ok for JSON workflows in processus
-                    // if (isNaN(valA)) { valA = JSON.stringify(valA); }
-                    // if (isNaN(valB)) { valB = JSON.stringify(valB); }
-
-                    //update result based on operator
-                    if (op.toLowerCase() === 'is' ||
-                        op.toLowerCase() === 'equals' ||
-                        op.toLowerCase() === '==' ||
-                        op.toLowerCase() === '===' ||
-                        op.toLowerCase() === 'match') {
-                        // this.logger.debug('testing condition [' + valA + ' == ' + valB + '] ==> ' + (valA === valB));
-                        expression._valid = (valA === valB);
-                    }
-                    else if (op.toLowerCase() === 'is not' ||
-                        op.toLowerCase() === 'not equals' ||
-                        op.toLowerCase() === '!=' ||
-                        op.toLowerCase() === '!==' ||
-                        op.toLowerCase() === 'not match') {
-                        expression._valid = (valA !== valB);
-                    }
-                    else if (op.toLowerCase() === 'greater than' ||
-                        op.toLowerCase() === 'greater' ||
-                        op.toLowerCase() === '>') {
-                        expression._valid = (valA > valB);
-                    }
-                    else if (op.toLowerCase() === 'less than' ||
-                        op.toLowerCase() === 'less' ||
-                        op.toLowerCase() === '<') {
-                        expression._valid = (valA < valB);
-                    }
-                    else if (op.toLowerCase() === 'greater or equals' || op.toLowerCase() === '>==' ||
-                        op.toLowerCase() === '>=') {
-                        expression._valid = (valA >= valB);
-                    }
-                    else if (op.toLowerCase() === 'less or equals' || op.toLowerCase() === '<==' ||
-                        op.toLowerCase() === '<=') {
-                        expression._valid = (valA <= valB);
-                    }
-                    else {
-                        throw new Error(`Unknown conditional operator [${op}] in task [${expression}]`);
-                    }
-                    //update orResult and andResult
-                    if (expression._valid) {
-                        //at least 1 or more condition is true so set orResult accordingly
-                        condition._anyValid = true;
-                    } else {
-                        condition._allValid = false;
-                    }
-
-                    return expression;
-                }))
+                for ( const key of expVariableKeys ) {
+                    const value = expVariables[ key ];
+                    expVariables[ key ] = await this.valueLocator( processInstance, value, gateway );
+                }
+                const expresssion = await this.replaceVariables( condition.expression, expVariables );
+                condition._valid = eval( expresssion );
                 return condition;
-            });
-        } catch (err) {
-            this.logger.error(err);
+            } );
+        } catch ( err ) {
+            this.logger.error( err );
             return gateway.conditions;
         }
     }
 
-    /**
-     * [DEPRICATED] - acheived by using exclusive gateway
-     * @param processInstance {object} - process instance object
-     * @param conditions {array} - array of conditions 
+        /**
+     * replace condition expression variables with expvariables 
+     * @param expression 
+     * @param inputObject 
+     * @returns 
      */
-    ifElseHandler(processInstance, conditions) {
-        // TODO validate if else condition object
-        const ifElseCond = conditions[0];
-        let result;
-        if (ifElseCond.op.toLowerCase() === 'and' || ifElseCond.op === '&&') {
-            result = ifElseCond._allValid;
-        }
-        // else {
-        //     result = !ifElseCond._allValid;
-        // }
-        if (ifElseCond.op.toLowerCase() === 'or' || ifElseCond.op === '||') {
-            result = ifElseCond._anyValid;
-        }
-        // else {
-        //     result = !ifElseCond._anyValid;
-        // }
-        if (result) {
-            this.goToNextStage(processInstance, ifElseCond.onTrueNextStage);
-        } else {
-            this.goToNextStage(processInstance, ifElseCond.nextStages[0]);
-        }
+    replaceVariables ( expression, inputObject ) {
+        return expression.replace( /([a-zA-Z$_][a-zA-Z$_0-9]*)/g, ( match, varName ) => {
+            return inputObject[ varName ] !== undefined ? JSON.stringify( inputObject[ varName ] ) : match;
+        } );
     }
+
 
     /**
      * Evaluate a exclusive gateway conditions
@@ -256,20 +175,35 @@ export class Executor implements OnModuleInit {
      * @param stage {object} - gateway stage object
      * @param conditions {array} - array of conditions
      */
-    exclusiveHandler(processInstance, stage, conditions) {
-        // TODO validate if else condition object
-        const cond = conditions.find(cond => {
-            if ((cond.op.toLowerCase() === 'and' || cond.op === '&&') && cond._allValid === true) {
-                return cond
+    exclusiveHandler ( processInstance, nextStages, conditions ) {
+        const cond = conditions.find( cond => {
+            if ( cond._valid ) {
+                return cond;
             }
-            if ((cond.op.toLowerCase() === 'or' || cond.op === '||') && cond._anyValid === true) {
-                return cond
-            }
-        });
-        if (cond) {
-            this.goToNextStage(processInstance, cond.onTrueNextStage);
+        } );
+        if ( cond ) {
+            this.goToNextStage( processInstance._id, cond.onTrueNextStage );
         } else {
-            this.iterateNextStages(processInstance, stage.nextStages); // TODO need to be changed
+            this.iterateNextStages( processInstance, nextStages ); // TODO need to be changed
+        }
+    }
+
+    /**
+    * Evaluate a inclusive gateway conditions
+    * @param processInstance {object} - process instance object
+    * @param stage {object} - gateway stage object
+    * @param conditions {array} - array of conditions
+    */
+    inclusiveHandler ( processInstance, stage, conditions ) {
+        const onTrueStages = conditions.filter( cond => {
+            if ( cond._valid ) {
+                return cond;
+            }
+        } ).map( obj => obj.onTrueNextStage );
+        if ( onTrueStages[ 0 ] ) {
+            this.iterateNextStages( processInstance, onTrueStages );
+        } else {
+            this.iterateNextStages( processInstance, stage.nextStages );
         }
     }
 
@@ -320,9 +254,6 @@ export class Executor implements OnModuleInit {
         let complete = true;
         this.logger.debug(`Evaluating [${gateway.subType}] gateway...`);
         switch (gateway.subType) {
-            case Constants.STAGE_SUB_TYPES.IF_ELSE: // [DEPRICATED]
-                this.ifElseHandler(processInstance, gatewayConditions);
-                break;
             case Constants.STAGE_SUB_TYPES.SWITCH_CASE:
                 break;
             case Constants.STAGE_SUB_TYPES.EXCLUSIVE:

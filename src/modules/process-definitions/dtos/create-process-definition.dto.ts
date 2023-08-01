@@ -21,32 +21,21 @@ import { Type } from 'class-transformer';
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
 
 
-class Expression {
-  @ApiProperty()
-  lhs: any;
-
-  @ApiProperty()
-  op: string;
-
-  @ApiProperty()
-  rhs: any;
-}
-
 class Condition {
   @ApiProperty()
   name: string;
 
-  @ApiProperty()
-  op: string;
+  @ApiProperty( { type: {} } )
+  expVariables: {};
 
-  @ApiProperty({ type: [Expression] })
-  expressions: Expression[]
+  @ApiProperty()
+  expression: string;
 
   @ApiProperty()
   onTrueNextStage: string;
 
   @ApiProperty()
-  onFalseNextStage: string
+  onFalseNextStage: string;
 }
 
 class PropertyType {
