@@ -612,6 +612,10 @@ export class Executor implements OnModuleInit {
 
                 [err, data] = await this.grpc.call(connector.config);
                 break;
+            case 'python':
+                connector.config.data = { ...connector.config.data, ...parameters };
+                [err, data] = await this.http.call(connector.config);
+                break;
         }
         if (err) {
             this.logger.error('[Connector Response Error] ', err);
