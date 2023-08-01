@@ -68,6 +68,7 @@
     "expressionparser": "^1.1.5",
     "joi": "^17.9.2",
     "jwt-decode": "^3.1.2",
+    "kafkajs": "^2.2.4",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "mongoose": "^6.4.4",

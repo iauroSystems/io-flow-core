@@ -1,16 +1,33 @@
 const Joi = require('joi');
 
+const connectorKafkaSchema = Joi.object({
+    type: Joi.string().required().valid('kafka'),
+    config: Joi.object({
+        operation: Joi.string().required(),
+        clientId: Joi.string().required(),
+        broker: Joi.string().required(),
+        topic: Joi.string().required(),
+        message: Joi.string().optional(),
+        data: Joi.object().optional(),
+    }).required()
+});
+
 const connectorRestSchema = Joi.object({
-    url: Joi.string().required(),
-    timeout: Joi.number().default(5000),
-    method: Joi.string().required(),
-    headers: Joi.object().optional(),
-    params: Joi.object().optional(),
-    query: Joi.object().optional(),
-    data: Joi.object().optional(),
-}).required();
+    type: Joi.string().required().valid('rest'),
+    config:Joi.object({
+        url: Joi.string().required(),
+        timeout: Joi.number().default(5000),
+        method: Joi.string().required(),
+        headers: Joi.object().optional(),
+        params: Joi.object().optional(),
+        query: Joi.object().optional(),
+        data: Joi.object().optional(),
+}).required()
+})
 
 const connectorGrpcSchema = Joi.object({
+    type: Joi.string().required().valid('grpc'),
+    config: Joi.object({
     serviceOptions: Joi.object({
         protoPath: Joi.string().required(),
         serviceName: Joi.string().required(),
@@ -22,7 +39,8 @@ const connectorGrpcSchema = Joi.object({
         message: Joi.object().optional(),
         metadata: Joi.object().optional(),
     }).required(),
-}).required();
+}).required()
+});
 
 
 const expressionSchema = Joi.object({
@@ -97,13 +115,11 @@ export const StagesSchema = {
         ),
         assignee: Joi.string().allow('').optional(),
         criteria: criteriaSchema.allow(null).optional(),
-        connector: Joi.object({
-            type: Joi.string().required().valid('soap', 'rest', 'kafka', 'grpc', 'javascript', 'python'),
-            config: Joi.alternatives().try(
+        connector:Joi.alternatives().try(
                 connectorRestSchema,
-                connectorGrpcSchema
-            ).required(),
-        }).allow(null).optional(),
+                connectorGrpcSchema,
+                connectorKafkaSchema,
+        ).allow(null).optional(),
 
         formId: Joi.string().optional(),
         customParams: Joi.object().optional()
@@ -131,13 +147,11 @@ export const StagesSchema = {
             }).optional()
         ),
         criteria: criteriaSchema.allow(null).optional(),
-        connector: Joi.object({
-            type: Joi.string().required().valid('soap', 'rest', 'kafka', 'grpc', 'javascript', 'python'),
-            config: Joi.alternatives().try(
+        connector: Joi.alternatives().try(
                 connectorRestSchema,
                 connectorGrpcSchema,
-            ).required(),
-        }).allow(null).optional(),
+                connectorKafkaSchema,
+        ).allow(null).optional(),
         customParams: Joi.object().optional()
     }),
 
