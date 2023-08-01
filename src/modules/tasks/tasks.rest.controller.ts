@@ -51,4 +51,10 @@ export class TasksController {
   async getMyStatsByDefinitionId(@Headers() headers: CommonHeadersDto, @Query() query: GetProcessInstanceStatsQueryDto): Promise<CustomResponse | CustomError> {
     return this.tasksService.getTasksStats(headers, query, true);
   }
+
+  @ApiExcludeEndpoint()
+  @Get('timer')
+  async updateTimer(): Promise<CustomResponse | CustomError> {
+    return this.tasksService.updateTimer();
+  }
 }
