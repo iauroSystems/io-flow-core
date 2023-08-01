@@ -20,6 +20,15 @@ import {
 import { Type } from 'class-transformer';
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
 
+class User {
+  @ApiProperty()
+  @IsOptional()
+  userId: string;
+
+  @ApiProperty()
+  @IsOptional()
+  emailId: string;
+}
 class PropertyType {
   @ApiProperty({ type: String })
   type: string;
@@ -42,7 +51,7 @@ class Property {
   value: PropertyType
 }
 
-class Criteria {
+class DefinitionCriteria {
   @ApiProperty({ default: true })
   @IsOptional()
   allCompleted: boolean;
@@ -70,14 +79,6 @@ class Criteria {
   @ApiProperty({ default: true })
   @IsOptional()
   mandatoryCompleted: boolean;
-
-  @ApiProperty({ default: true })
-  @IsOptional()
-  onErrorComplete: boolean;
-
-  @ApiProperty({ default: false })
-  @IsOptional()
-  showError: boolean;
 }
 class Config {
 
@@ -164,9 +165,9 @@ export class StageDefinition {
   @IsOptional()
   watchers: string[];
 
-  @ApiProperty({ type: Criteria })
+  @ApiProperty({ type: DefinitionCriteria })
   @IsOptional()
-  criteria?: Criteria;
+  criteria?: DefinitionCriteria;
 
   @ApiProperty({ type: Connector })
   @IsOptional()
@@ -194,9 +195,9 @@ export class UpdateProcessDefinitionDto {
   @IsOptional()
   properties?: Property[];
 
-  @ApiProperty({ type: Criteria })
+  @ApiProperty({ type: DefinitionCriteria })
   @IsOptional()
-  criteria?: Criteria;
+  criteria?: DefinitionCriteria;
 
   @IsArray()
   @ApiProperty({ type: [StageDefinition] })
@@ -210,6 +211,10 @@ export class UpdateProcessDefinitionDto {
   assigneeConnector?: Connector; // this field is temporary
 
   _compiledDefinition?: any;
+
+  @ApiProperty({ type: User })
+  @IsOptional()
+  createdBy?: User; // this field is temporary
 
 }
 

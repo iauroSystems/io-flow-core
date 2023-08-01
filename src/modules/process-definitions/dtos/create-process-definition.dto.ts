@@ -15,11 +15,22 @@ import {
   IsOptional,
   IsIn,
   IsEnum,
-  ArrayUnique
+  ArrayUnique,
+  Length,
+  Max
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
 
+class User {
+  @ApiProperty()
+  @IsOptional()
+  userId: string;
+
+  @ApiProperty()
+  @IsOptional()
+  emailId: string;
+}
 
 class Condition {
   @ApiProperty()
@@ -74,7 +85,7 @@ class Property {
   value: PropertyType
 }
 
-class Criteria {
+class DefinitionCriteria {
   @ApiProperty({ default: true })
   @IsOptional()
   allCompleted: boolean;
@@ -102,7 +113,9 @@ class Criteria {
   @ApiProperty({ default: true })
   @IsOptional()
   mandatoryCompleted: boolean;
+}
 
+class StageCriteria {
   @ApiProperty({ default: true })
   @IsOptional()
   onErrorComplete: boolean;
@@ -159,9 +172,6 @@ class StageDefinition {
   @ApiProperty({ type: [String], default: [] })
   nextStages: string[];
 
-  @ApiProperty({ type: String, default: '' })
-  defaultNextStage: string;
-
   @IsArray()
   @ApiProperty({ type: [Property] })
   @IsOptional()
@@ -180,9 +190,9 @@ class StageDefinition {
   @IsOptional()
   watchers: string[];
 
-  @ApiProperty({ type: Criteria })
+  @ApiProperty({ type: StageCriteria })
   @IsOptional()
-  criteria?: Criteria;
+  criteria?: StageCriteria;
 
   @ApiProperty({ type: Connector })
   @IsOptional()
@@ -190,6 +200,7 @@ class StageDefinition {
 
   @ApiProperty({ type: String })
   @IsOptional()
+  @Length(24, 24)
   processDefinitionId?: string;
 
   @ApiProperty({ type: String })
@@ -203,6 +214,7 @@ class StageDefinition {
   @ApiProperty({ type: String })
   @IsOptional()
   priority?: string;
+
 }
 
 
@@ -230,9 +242,9 @@ export class CreateProcessDefinitionDto {
   @Type(() => Property)
   properties: Property[];
 
-  @ApiProperty({ type: Criteria })
+  @ApiProperty({ type: DefinitionCriteria })
   @IsOptional()
-  criteria?: Criteria;
+  criteria?: DefinitionCriteria;
 
   @IsArray()
   @ApiProperty({ type: [StageDefinition], default: [] })
@@ -245,7 +257,9 @@ export class CreateProcessDefinitionDto {
   @IsOptional()
   assigneeConnector?: Connector; // this field is temporary
 
-
+  @ApiProperty({ type: User })
+  @IsOptional()
+  createdBy?: User; // this field is temporary
 }
 
 function ValidateType(arg0: () => typeof StageDefinition) {

@@ -75,7 +75,7 @@ class Property extends Document {
   value: PropertyType;
 }
 
-class Criteria extends Document {
+class DefinitionCriteria extends Document {
   @Prop()
   allCompleted: boolean;
 
@@ -96,7 +96,9 @@ class Criteria extends Document {
 
   @Prop({ type: Boolean, default: true })
   mandatoryCompleted: boolean;
+}
 
+class StageCriteria extends Document {
   @Prop({ type: Boolean, default: true })
   onErrorComplete: boolean;
 
@@ -205,9 +207,6 @@ class StageInstanceSchema {
   @Prop({ type: [String] })
   nextStages: string[];
 
-  @Prop()
-  defaultNextStage: string;
-
   @Prop([Property])
   properties: Property[];
 
@@ -226,8 +225,8 @@ class StageInstanceSchema {
   @Prop({ type: [String] })
   watchers: string[];
 
-  @Prop({ type: Criteria, default: null })
-  criteria?: Criteria;
+  @Prop({ type: StageCriteria })
+  criteria?: StageCriteria;
 
   @Prop({ type: Connector, default: null })
   connector?: Connector;
@@ -306,8 +305,8 @@ export class ProcessInstance extends Document {
   @Prop({ default: false })
   isParallel: boolean;
 
-  @Prop({ type: Criteria, default: null })
-  criteria?: Criteria;
+  @Prop({ type: DefinitionCriteria, default: null })
+  criteria?: DefinitionCriteria;
 
   @Prop()
   description: string;

@@ -79,7 +79,7 @@ export class ProcessInstanceService {
       throw new CustomError(HttpStatus.BAD_REQUEST, error || 'Error in process definition');
     }
 
-    await this.execute.startFlow(processInstance, processInstanceBody);
+    this.execute.startFlow(_.pick(processInstance, ['_id', 'isParallel', 'stages', '_startIndex']), processInstanceBody);
 
     // mark current task as complete
     // GoTo next stage
@@ -186,7 +186,7 @@ export class ProcessInstanceService {
     const defaultProjection = { _startIndex: 0, _endIndex: 0, _flags: 0, _stageIndexJSON: 0 };
 
     const count = await this.processInstanceRepositoryImpl.count(condition);
-    const data = await this.processInstanceRepositoryImpl.find(condition, defaultProjection, query.page, query.size);
+    const data = await this.processInstanceRepositoryImpl.find(condition, defaultProjection, query.page, query.size, sort || { $natural: -1 });
     return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, { count, data });
   }
 
@@ -308,7 +308,7 @@ export class ProcessInstanceService {
       throw new CustomError(HttpStatus.BAD_REQUEST, error || 'Error in process definition');
     }
     const newInstanceId = new Types.ObjectId();
-    await this.runFlow(workflow, newInstanceId, processInstanceBody);
+    this.runFlow({ properties: workflow.properties, _compiledDefinition: workflow._compiledDefinition }, newInstanceId, processInstanceBody);
     return new CustomResponse(HttpStatus.CREATED, CustomMessages.PROCESS_INSTANCE_RUNNING, { _id: newInstanceId });
   }
 
@@ -325,8 +325,13 @@ export class ProcessInstanceService {
     if (!workflow) {
       throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.WORKFLOW_NOT_EXISTS);
     }
+    const [isValid, error] = this.execute.validateParameters(workflow.properties, processInstanceBody?.parameters);
+    if (!isValid) {
+      // If flow is started by the API call
+      throw new CustomError(HttpStatus.BAD_REQUEST, error || 'Error in process definition');
+    }
     const newInstanceId = new Types.ObjectId();
-    await this.runFlow(workflow, newInstanceId, processInstanceBody);
+    this.runFlow({ properties: workflow.properties, _compiledDefinition: workflow._compiledDefinition }, newInstanceId, processInstanceBody);
     return new CustomResponse(HttpStatus.CREATED, CustomMessages.PROCESS_INSTANCE_RUNNING, { _id: newInstanceId });
   }
 
@@ -351,7 +356,7 @@ export class ProcessInstanceService {
     workflow._compiledDefinition.stages[workflow._compiledDefinition._startIndex].timeActivated = now;; // status of start stage
 
     const data = await this.processInstanceRepositoryImpl.create(workflow._compiledDefinition as any);
-    this.execute.startFlow(data, processInstanceBody);
+    this.execute.startFlow(_.pick(data, ['_id', 'isParallel', 'stages', '_startIndex']), processInstanceBody);
   }
 
 }

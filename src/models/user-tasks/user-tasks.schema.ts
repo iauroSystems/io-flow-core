@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as SchemaTypes } from 'mongoose';
 
 export type UserTasksDocument = UserTasks & Document;
 

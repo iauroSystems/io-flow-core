@@ -7,6 +7,14 @@ export type ProcessDefinitionDocument = ProcessDefinition & Document;
 
 class CompiledDefinition { }
 
+class User {
+  @Prop()
+  userId: string;
+
+  @Prop()
+  emailId: string;
+}
+
 class Condition {
   @Prop()
   name: string;
@@ -61,7 +69,7 @@ class Property {
   value: PropertyType;
 }
 
-class Criteria {
+class DefinitionCriteria extends Document {
   @Prop()
   allCompleted: boolean;
 
@@ -82,12 +90,14 @@ class Criteria {
 
   @Prop({ type: Boolean, default: true })
   mandatoryCompleted: boolean;
+}
 
+class StageCriteria extends Document {
   @Prop({ type: Boolean, default: true })
-  onErrorComplete: boolean; // Stage level criteria
+  onErrorComplete: boolean;
 
   @Prop({ type: Boolean, default: false })
-  showError: boolean; // stage level criteria
+  showError: boolean;
 }
 
 class Connector {
@@ -130,9 +140,6 @@ class StageDefinitionSchema {
   @Prop({ type: [String] })
   nextStages: string[];
 
-  @Prop()
-  defaultNextStage: string;
-
   @Prop([Property])
   properties: Property[];
 
@@ -149,8 +156,9 @@ class StageDefinitionSchema {
   @Prop({ type: [String] })
   watchers: string[];
 
-  @Prop({ type: Criteria, default: null })
-  criteria?: Criteria;
+  @Prop({ type: StageCriteria })
+  criteria?: StageCriteria;
+
 
   @Prop({ type: Connector, default: null })
   connector?: Connector;
@@ -166,6 +174,7 @@ class StageDefinitionSchema {
 
   @Prop()
   priority?: string;
+
 }
 
 
@@ -181,8 +190,8 @@ export class ProcessDefinition extends Document {
   @Prop({ default: false })
   isParallel: boolean;
 
-  @Prop({ type: Criteria, default: null })
-  criteria?: Criteria;
+  @Prop({ type: DefinitionCriteria, default: null })
+  criteria?: DefinitionCriteria;
 
   @Prop()
   description: string;
@@ -201,6 +210,12 @@ export class ProcessDefinition extends Document {
 
   @Prop({ type: CompiledDefinition })
   _compiledDefinition?: CompiledDefinition;
+
+  @Prop()
+  createdBy?: User;
+
+  @Prop()
+  updatedBy?: User;
 }
 
 export const ProcessDefinitionSchema = SchemaFactory.createForClass(ProcessDefinition);

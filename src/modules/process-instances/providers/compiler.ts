@@ -1,5 +1,5 @@
 import { HttpStatus, Logger, Injectable } from "@nestjs/common";
-import { PromiseProvider, Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { Constants } from "src/common/const/constants";
 
 
