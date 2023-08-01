@@ -158,12 +158,8 @@ export class Executor implements OnModuleInit {
   }
 
 
-
-
     isIsoDateString(str: string): boolean {
-        // The regular expression to match the ISO 8601 date string pattern
         const isoDateRegex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
-        // Test the string against the regular expression
         return isoDateRegex.test(str);
     }
 
@@ -239,8 +235,6 @@ export class Executor implements OnModuleInit {
         if (typeRhs === "number") {
             rhsFinal = this.convertDateObjectToString(new Date(rhs));
         }
-        console.log("lhsFinal---::", lhsFinal);
-        console.log("rhsFinal---::", rhsFinal);
 
         return this.checkEquality(rhsFinal, lhsFinal);
     }
@@ -311,8 +305,6 @@ export class Executor implements OnModuleInit {
         if (typeRhs === "number") {
             rhsFinal = this.convertDateObjectToString(new Date(rhs));
         }
-        console.log("lhsFinal---::", lhsFinal);
-        console.log("rhsFinal---::", rhsFinal);
 
         return this.lessThanCheck(lhsFinal, rhsFinal);
 
@@ -369,8 +361,6 @@ export class Executor implements OnModuleInit {
         if (typeRhs === "number") {
             rhsFinal = this.convertDateObjectToString(new Date(rhs));
         }
-        console.log("lhsFinal---::", lhsFinal);
-        console.log("rhsFinal---::", rhsFinal);
 
         return this.greaterThanCheck(lhsFinal, rhsFinal);
 
