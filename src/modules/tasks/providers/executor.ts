@@ -126,64 +126,37 @@ export class Executor implements OnModuleInit {
     }
 
     checkEquality(lhsFinal: any, rhsFinal: any): boolean {
-        if (lhsFinal == rhsFinal) {
-            return true;
-        }
-
-        return false;
+        return (lhsFinal==rhsFinal)
     }
 
 
     countObliqueIsTwo(str: string): boolean {
-        let oblique = '/';
-        let count = 0;
-        for (let i = 0; i < str.length; i++) {
-            if (str[i] == oblique) {
-                count++;
-            }
-        }
-        if (count == 2) {
-            return true;
-        }
-
-        return false;
+      const oblique = '/';
+      const count = this.countOccurrences(str, oblique);
+      return count === 2;
     }
 
     countHyphenIsTwo(str: string): boolean {
-        let hyphen = '-';
-        let count = 0;
-        for (let i = 0; i < str.length; i++) {
-            if (str[i] == hyphen) {
-                count++;
-            }
-        }
-        if (count == 2) {
-            return true;
-        }
-
-        return false;
+      const hyphen = '-';
+      const count = this.countOccurrences(str, hyphen);
+      return count === 2;
     }
 
-    convertDateObjectToString(dateObject: Date): string {
-        let date: any = dateObject.getDate();
-        let month: any = dateObject.getMonth() + 1;
-        let year: any = dateObject.getFullYear();
 
-        date = date.toString();
-        if (date.length == 1) {
-            date = '0' + date;
-        }
-        month = month.toString();
-        if (month.length == 1) {
-            month = '0' + month;
-        }
+   countOccurrences(str: string, char: string): number {
+    const regex = new RegExp(char, 'g');
+    const count = (str.match(regex) || []).length;
+    return count;
+  }
 
-        year = year.toString();
+   convertDateObjectToString(dateObject: Date): string {
+    const date = String(dateObject.getDate()).padStart(2, '0');
+    const month = String(dateObject.getMonth() + 1).padStart(2, '0');
+    const year = String(dateObject.getFullYear());
 
-        let result = date + '/' + month + '/' + year;
+    return `${date}/${month}/${year}`;
+  }
 
-        return result;
-    }
 
 
 
