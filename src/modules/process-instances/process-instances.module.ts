@@ -10,7 +10,7 @@ import { ProcessInstanceController } from './process-instances.rest.controller';
 import { ProcessInstanceService } from './process-instances.service';
 import { Compiler } from './providers';
 import { Executor } from '../tasks/providers';
-import { HttpConnector, GrpcConnector, KafkaConnector } from 'src/shared/connectors';
+import { HttpConnector, GrpcConnector, KafkaConnector, OpenAIConnector } from 'src/shared/connectors';
 import { UserTasksRepositoryImpl } from 'src/models/user-tasks/repository/user-tasks.repository.impl';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProcessDefinition, ProcessDefinitionSchema } from 'src/models/process-definitions/process-definitions.schema';
@@ -23,6 +23,6 @@ import { UserTasks, UserTasksSchema } from 'src/models/user-tasks/user-tasks.sch
 
   ],
   controllers: [ProcessInstanceController],
-  providers: [ProcessInstanceService, ProcessInstanceRepositoryImpl, ProcessDefinitionRepositoryImpl, Compiler, Executor, UserTasksRepositoryImpl, HttpConnector, GrpcConnector,KafkaConnector],
+  providers: [ProcessInstanceService, ProcessInstanceRepositoryImpl, ProcessDefinitionRepositoryImpl, Compiler, Executor, UserTasksRepositoryImpl, HttpConnector, GrpcConnector,KafkaConnector, OpenAIConnector],
 })
 export class ProcessInstancesModule { }

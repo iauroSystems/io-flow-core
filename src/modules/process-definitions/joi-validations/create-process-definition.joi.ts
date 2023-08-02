@@ -1,5 +1,14 @@
 const Joi = require('joi');
 
+const connectorOpenAISchema = Joi.object({
+    type: Joi.string().required().valid('openai'),
+    config: Joi.object({
+        prompt: Joi.string().required(),
+        apiKey: Joi.string().required(),
+        data: Joi.object().optional(),
+    }).required()
+});
+
 const connectorKafkaSchema = Joi.object({
     type: Joi.string().required().valid('kafka'),
     config: Joi.object({
@@ -119,6 +128,7 @@ export const StagesSchema = {
                 connectorRestSchema,
                 connectorGrpcSchema,
                 connectorKafkaSchema,
+                connectorOpenAISchema,
         ).allow(null).optional(),
 
         formId: Joi.string().optional(),
@@ -151,6 +161,7 @@ export const StagesSchema = {
                 connectorRestSchema,
                 connectorGrpcSchema,
                 connectorKafkaSchema,
+                connectorOpenAISchema,
         ).allow(null).optional(),
         customParams: Joi.object().optional()
     }),
