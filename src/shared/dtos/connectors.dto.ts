@@ -52,3 +52,12 @@ export class GrpcConnectorDto {
     @IsNotEmptyObject()
     methodOptions: GrpcMethodOptions;
 }
+
+export class OpenAIConnectorDto{
+    prompt: string;
+    apiKey: string;
+    
+    @IsOptional()
+    data?: any;
+    
+}
