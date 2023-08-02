@@ -64,12 +64,3 @@ export class KafkaConnectorDto {
     
     data: any; 
 }
-
-export class OpenAIConnectorDto{
-    prompt: string;
-    apiKey: string;
-    
-    @IsOptional()
-    data?: any;
-    
-}
