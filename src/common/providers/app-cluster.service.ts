@@ -38,7 +38,7 @@ export class AppClusterService {
                 this.logger.log(`Worker ${process.pid} received message from master. ${msg}`);
                 if (msg['order'] === 'executeOnlyOnce') {
                     const executeOnlyOnce = new ExecuteOnlyOnce();
-                    executeOnlyOnce.exampleCron();
+                    executeOnlyOnce.handleTimerEventCron('timerCron', 10);
                 }
             });
             this.logger.log(`Cluster server started on ${process.pid}`)

@@ -7,7 +7,7 @@ import { TasksService } from './tasks.service';
 import { ProcessInstanceRepositoryImpl } from 'src/models/process-instances/repository/process-instances.repository.impl';
 import { ProcessDefinitionRepositoryImpl } from 'src/models/process-definitions/repository/process-definitions.repository.impl';
 import { Compiler } from '../process-instances/providers';
-import { Executor, CronService } from './providers';
+import { Executor } from './providers';
 import { HttpConnector, GrpcConnector } from 'src/shared/connectors';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProcessInstance, ProcessInstanceSchema } from 'src/models/process-instances/process-instances.schema';
@@ -20,6 +20,6 @@ import { ProcessDefinition, ProcessDefinitionSchema } from 'src/models/process-d
   ],
   exports: [],
   controllers: [TasksController],
-  providers: [TasksService, UserTasksRepositoryImpl, ProcessInstanceRepositoryImpl, ProcessDefinitionRepositoryImpl, HttpConnector, Compiler, Executor, GrpcConnector, CronService],
+  providers: [TasksService, UserTasksRepositoryImpl, ProcessInstanceRepositoryImpl, ProcessDefinitionRepositoryImpl, HttpConnector, Compiler, Executor, GrpcConnector],
 })
 export class TasksModule { }
