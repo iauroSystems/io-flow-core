@@ -24,9 +24,9 @@ export class OpenAIConnector {
         },
       );
         const response = await responsePromise;
-        return [response];
+        return [null,response];
     } catch (error) {
-        return [error.toString()];
+        return [error.toString(),null];
     }
   }
 }
