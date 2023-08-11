@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  # Mongodb service
+  mongo_db:
+    container_name: ioflowdb
+    image: mongo:latest
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+
+  # Node api service
+  api:
+    build: .
+    ports:
+      # local->container
+      - 30009:30009
+    environment:
+      TCP_PORT: 30009
+      GRPC_HOST: localhost
+      GRPC_PORT: 40009
+      MONGO_PROTOCOL: mongodb
+      MONGO_HOST: mongo_db
+      MONGO_PORT: 27017
+      MONGO_DBNAME: workflowEngine
+    depends_on: 
+      - mongo_db
+
+volumes:
+  mongo_data: {}
