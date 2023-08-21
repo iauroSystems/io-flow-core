@@ -48,3 +48,4 @@ Thumbs.db
 *.mov
 *.wmv
 src/shared/clients/gRPC/*
+src/shared/public
