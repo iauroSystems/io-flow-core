@@ -52,3 +52,15 @@ export class GrpcConnectorDto {
     @IsNotEmptyObject()
     methodOptions: GrpcMethodOptions;
 }
+
+export class KafkaConnectorDto {
+    operation: string;
+
+    clientId:any;
+
+    broker: string;
+
+    topic: string;
+    
+    data: any; 
+}
