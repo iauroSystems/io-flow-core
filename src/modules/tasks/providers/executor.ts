@@ -9,7 +9,7 @@ import CustomError from 'src/common/exceptions';
 import { ProcessDefinitionRepositoryImpl } from 'src/models/process-definitions/repository/process-definitions.repository.impl';
 import { ProcessInstanceRepositoryImpl } from 'src/models/process-instances/repository/process-instances.repository.impl';
 import { UserTasksRepositoryImpl } from 'src/models/user-tasks/repository/user-tasks.repository.impl';
-import { HttpConnector, GrpcConnector } from 'src/shared/connectors';
+import { HttpConnector, GrpcConnector, OpenAIConnector } from 'src/shared/connectors';
 import { Compiler } from '../../process-instances/providers';
 import { Webhooks } from 'src/common/const/enums';
 import { REQUEST } from '@nestjs/core';
@@ -26,6 +26,7 @@ export class Executor implements OnModuleInit {
         private processDefinitionRepositoryImpl: ProcessDefinitionRepositoryImpl,
         private http: HttpConnector,
         private grpc: GrpcConnector,
+        private openAI: OpenAIConnector,
         private compiler: Compiler,
         @Inject(REQUEST) private readonly request: Request
     ) { }
@@ -612,6 +613,10 @@ export class Executor implements OnModuleInit {
 
                 [err, data] = await this.grpc.call(connector.config);
                 break;
+            case 'openai':
+                connector.config['data'] = parameters;
+                [err, data] = await this.openAI.call(connector.config);
+                break;   
         }
         if (err) {
             this.logger.error('[Connector Response Error] ', err);
