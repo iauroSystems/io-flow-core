@@ -613,6 +613,10 @@ export class Executor implements OnModuleInit {
 
                 [err, data] = await this.grpc.call(connector.config);
                 break;
+            case 'python':
+                connector.config.data = { ...connector.config.data, ...parameters };
+                [err, data] = await this.http.call(connector.config);
+                break;
             case 'openai':
                 connector.config['data'] = parameters;
                 [err, data] = await this.openAI.call(connector.config);
