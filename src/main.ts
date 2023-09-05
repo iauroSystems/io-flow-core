@@ -13,9 +13,9 @@ import { Logger } from '@nestjs/common';
 import { json } from 'body-parser';
 
 const {
-  TCP_PORT,
+  TCP_PORT = 30009,
   GRPC_HOST,
-  GRPC_PORT,
+  GRPC_PORT = 40009,
   SWAGGER_BASEPATH = '',
   SWAGGER_TITLE,
   SWAGGER_DESC,

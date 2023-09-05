@@ -28,9 +28,9 @@ Following are the environment variables required to pass for the deployment
 
 ```
 NODE_ENV
-TCP_PORT=3000
+TCP_PORT=30009
 GRPC_HOST=localhost
-GRPC_PORT=4000
+GRPC_PORT=40009
 MONGO_PROTOCOL=mongodb
 MONGO_HOST=localhost
 MONGO_PORT=27017
@@ -46,6 +46,8 @@ SWAGGER_DOC_PATH=api/documentation
 APP_BASEPATH=v1
 
 ```
+30009 is the default port for REST APIs
+40009 is the default port for gRPC APIs
 
 ### Deployment
 #### Local Development
