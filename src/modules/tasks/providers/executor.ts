@@ -1360,6 +1360,23 @@ export class Executor implements OnModuleInit {
         }
 
     }
+    async makeTimerEventEnd() {
+        this.logger.debug('Executing Timers...');
+        const now = Date.now();
+        const condition = {
+            stages: { $elemMatch: { subType: Constants.STAGE_SUB_TYPES.TIMER, status: Constants.STAGE_STATUSES.ACTIVE, expToCompleteAt: { $lte: now } } }
+        };
+        const instances = await this.processInstanceRepositoryImpl.find(condition, { status: 1, 'stages.$': 1 });
+        const setValues = {
+            'stages.$.status': Constants.STAGE_STATUSES.COMPLETED,
+            'stages.$.timeCompleted': now
+        };
+        const response = await this.processInstanceRepositoryImpl.updateMany(condition, setValues);
+        for (const instance of instances) {
+            this.iterateNextStages(instance, instance.stages[0].nextStages);
+        };
+        // this.webhook.callWebhook(Webhooks.UPDATE_INSTANCE, response);
+    }
 
 }
 

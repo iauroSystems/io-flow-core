@@ -10,6 +10,7 @@ import { HttpModule } from '@nestjs/axios';
 import { ProcessDefinitionsModule, ProcessInstancesModule, TasksModule } from './modules';
 import { HttpConnector } from 'src/shared/connectors';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // example run command
 // export NODE_ENV=local && npm start
@@ -29,6 +30,7 @@ const MONGO_PROTOCOL = process.env.MONGO_PROTOCOL, MONGO_HOST = process.env.MONG
     }),
     HttpModule,
     MongooseModule.forRoot(`mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DBNAME}`),
+    ScheduleModule.forRoot(),
     ProcessDefinitionsModule,
     ProcessInstancesModule,
     TasksModule,
