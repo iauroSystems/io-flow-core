@@ -128,6 +128,248 @@ export class Executor implements OnModuleInit {
         return path;
     }
 
+    checkEquality(lhsFinal: any, rhsFinal: any): boolean {
+        return (lhsFinal==rhsFinal)
+    }
+
+
+    countObliqueIsTwo(str: string): boolean {
+      const oblique = '/';
+      const count = this.countOccurrences(str, oblique);
+      return count === 2;
+    }
+
+    countHyphenIsTwo(str: string): boolean {
+      const hyphen = '-';
+      const count = this.countOccurrences(str, hyphen);
+      return count === 2;
+    }
+
+
+   countOccurrences(str: string, char: string): number {
+    const regex = new RegExp(char, 'g');
+    const count = (str.match(regex) || []).length;
+    return count;
+  }
+
+   convertDateObjectToString(dateObject: Date): string {
+    const date = String(dateObject.getDate()).padStart(2, '0');
+    const month = String(dateObject.getMonth() + 1).padStart(2, '0');
+    const year = String(dateObject.getFullYear());
+
+    return `${date}/${month}/${year}`;
+  }
+
+
+    isIsoDateString(str: string): boolean {
+        const isoDateRegex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+        return isoDateRegex.test(str);
+    }
+
+    formatDate(str: any): string {
+        str = new Date(str).toString();
+        let day: any = str.getDate();
+        let month: any = str.getMonth() + 1;
+        let year: any = str.getFullYear();
+        if (day < 10) {
+            day = day.toString();
+            day = '0' + day;
+        }
+        if (month < 10) {
+            month = month.toString();
+            month = '0' + month;
+        }
+
+        let formattedDate = `${day}/${month}/${year}`;
+
+        return formattedDate;
+    }
+
+
+
+    checkDates(lhs: any, rhs: any): boolean {
+        let lhsFinal: string | undefined;
+        let rhsFinal: string | undefined;
+        let typeLhs = typeof lhs;
+        let typeRhs = typeof rhs;
+
+        if (typeLhs === "object") {
+            lhsFinal = this.convertDateObjectToString(lhs);
+        }
+        if (typeLhs === "string") {
+            if (this.isIsoDateString(lhs)) {
+                lhsFinal = this.convertDateObjectToString(new Date(lhs));
+            } else {
+                if (lhs.length <= 10) {
+                    if (this.countObliqueIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    } else if (this.countHyphenIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    }
+                } else if (lhs.length > 10) {
+                    lhsFinal = this.formatDate(lhs);
+                }
+            }
+        }
+        if (typeLhs === "number") {
+            lhsFinal = this.convertDateObjectToString(new Date(lhs));
+        }
+
+        if (typeRhs === "object") {
+            rhsFinal = this.convertDateObjectToString(rhs);
+        }
+        if (typeRhs === "string") {
+            if (this.isIsoDateString(rhs)) {
+                rhsFinal = this.convertDateObjectToString(new Date(rhs));
+            } else {
+                if (rhs.length <= 10) {
+                    if (this.countObliqueIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    } else if (this.countHyphenIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    }
+                } else if (rhs.length > 10) {
+                    rhsFinal = this.formatDate(rhs);
+                    console.log("rhsFinal :: ", rhsFinal);
+                }
+            }
+        }
+
+        if (typeRhs === "number") {
+            rhsFinal = this.convertDateObjectToString(new Date(rhs));
+        }
+
+        return this.checkEquality(rhsFinal, lhsFinal);
+    }
+
+
+    lessThanCheck(lhs: any, rhs: any): boolean {
+        const lhsDate = new Date(lhs);
+        const rhsDate = new Date(rhs);
+
+        return lhsDate.getTime() < rhsDate.getTime();
+    }
+
+    greaterThanCheck(lhs: any, rhs: any): boolean {
+        const lhsDate = new Date(lhs);
+        const rhsDate = new Date(rhs);
+
+        return lhsDate.getTime() > rhsDate.getTime();
+    }
+
+    lessThanDate(lhs: any, rhs: any): boolean {
+        let lhsFinal: string | undefined;
+        let rhsFinal: string | undefined;
+        let typeLhs = typeof lhs;
+        let typeRhs = typeof rhs;
+
+        if (typeLhs === "object") {
+            lhsFinal = this.convertDateObjectToString(lhs);
+        }
+        if (typeLhs === "string") {
+            if (this.isIsoDateString(lhs)) {
+                lhsFinal = this.convertDateObjectToString(new Date(lhs));
+            } else {
+                if (lhs.length <= 10) {
+                    if (this.countObliqueIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    } else if (this.countHyphenIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    }
+                } else if (lhs.length > 10) {
+                    lhsFinal = this.formatDate(lhs);
+                }
+            }
+        }
+        if (typeLhs === "number") {
+            lhsFinal = this.convertDateObjectToString(new Date(lhs));
+        }
+
+        if (typeRhs === "object") {
+            rhsFinal = this.convertDateObjectToString(rhs);
+        }
+        if (typeRhs === "string") {
+            if (this.isIsoDateString(rhs)) {
+                rhsFinal = this.convertDateObjectToString(new Date(rhs));
+            } else {
+                if (rhs.length <= 10) {
+                    if (this.countObliqueIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    } else if (this.countHyphenIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    }
+                } else if (rhs.length > 10) {
+                    rhsFinal = this.formatDate(rhs);
+                    console.log("rhsFinal :: ", rhsFinal);
+                }
+            }
+        }
+
+        if (typeRhs === "number") {
+            rhsFinal = this.convertDateObjectToString(new Date(rhs));
+        }
+
+        return this.lessThanCheck(lhsFinal, rhsFinal);
+
+    }
+
+    greaterThanDate(lhs: any, rhs: any): boolean {
+        let lhsFinal: string | undefined;
+        let rhsFinal: string | undefined;
+        let typeLhs = typeof lhs;
+        let typeRhs = typeof rhs;
+
+        if (typeLhs === "object") {
+            lhsFinal = this.convertDateObjectToString(lhs);
+        }
+        if (typeLhs === "string") {
+            if (this.isIsoDateString(lhs)) {
+                lhsFinal = this.convertDateObjectToString(new Date(lhs));
+            } else {
+                if (lhs.length <= 10) {
+                    if (this.countObliqueIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    } else if (this.countHyphenIsTwo(lhs)) {
+                        lhsFinal = lhs;
+                    }
+                } else if (lhs.length > 10) {
+                    lhsFinal = this.formatDate(lhs);
+                }
+            }
+        }
+        if (typeLhs === "number") {
+            lhsFinal = this.convertDateObjectToString(new Date(lhs));
+        }
+
+        if (typeRhs === "object") {
+            rhsFinal = this.convertDateObjectToString(rhs);
+        }
+        if (typeRhs === "string") {
+            if (this.isIsoDateString(rhs)) {
+                rhsFinal = this.convertDateObjectToString(new Date(rhs));
+            } else {
+                if (rhs.length <= 10) {
+                    if (this.countObliqueIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    } else if (this.countHyphenIsTwo(rhs)) {
+                        rhsFinal = rhs;
+                    }
+                } else if (rhs.length > 10) {
+                    rhsFinal = this.formatDate(rhs);
+                    console.log("rhsFinal :: ", rhsFinal);
+                }
+            }
+        }
+
+        if (typeRhs === "number") {
+            rhsFinal = this.convertDateObjectToString(new Date(rhs));
+        }
+
+        return this.greaterThanCheck(lhsFinal, rhsFinal);
+
+    }
+
+
     // evaluate the conditions and return the same array
     /**
      * 
@@ -154,6 +396,10 @@ export class Executor implements OnModuleInit {
                     expression._lhs = valA;
                     expression._rhs = valB;
 
+                    let dateAreEqual = this.checkDates(expression._lhs, expression._rhs);
+                    let lessThanDate = this.lessThanDate(expression._lhs, expression._rhs);
+                    let greaterThanDate=this.greaterThanDate(expression._lhs,expression._rhs);
+
                     // both the values can not be undefined
                     if (valA === undefined && valB === undefined) {
                         throw new Error(`Condition [${condition.name}] expression [${JSON.stringify(expression)}] have [lhs] and [rhs] values as [undefined]!`);
@@ -161,6 +407,16 @@ export class Executor implements OnModuleInit {
 
                     if (op === undefined) {
                         throw new Error(`Condition [${condition.name}] expression [${JSON.stringify(expression)}] has no operator property set!`);
+                    }
+
+                    if (dateAreEqual === false) {
+                        if(lessThanDate==true){
+                            console.log('lhs<rhs')
+                        }
+                        else if(greaterThanDate==true){
+                            console.log('lhs>rhs')
+                        }
+                       
                     }
 
                     // //Check if value is Not a number, if so JSON.Stringify it to make a 'simple' object comparison
