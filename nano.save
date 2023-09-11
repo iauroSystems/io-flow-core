@@ -1,0 +1,3 @@
+Added : integrated timer completion feature
+
+cron job scheduled to complete estimatedTimeDuration of timer node
