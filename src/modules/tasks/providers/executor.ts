@@ -475,6 +475,10 @@ export class Executor implements OnModuleInit {
         let isValid = true;
         let _error = error;
         for (let field of properties) {
+            if (!field) {
+                isValid = false;
+                return [isValid, `${_error}.[properties] should not contain null value`, parameters];
+            }
             let fieldData = parameters[field.key]
             if (fieldData === undefined) {
                 if (field?.value?.default !== undefined) {
@@ -1358,6 +1362,26 @@ export class Executor implements OnModuleInit {
             };
             this.processInstanceRepositoryImpl.updateOne({ _id: processInstance._id }, setValues);
         }
+
+    }
+
+    async makeTimerEventEnd () {
+        this.logger.debug( 'Executing timer...' );
+        const now = Date.now();
+        const condition = {
+            stages: { $elemMatch: { subType: Constants.STAGE_SUB_TYPES.TIMER, status: Constants.STAGE_STATUSES.ACTIVE, expToCompleteAt: { $lte: now } } }
+        };
+        const instances = await this.processInstanceRepositoryImpl.find( condition, { status: 1, 'stages.$': 1 } );
+
+        const setValues = {
+            'stages.$.status': Constants.STAGE_STATUSES.COMPLETED,
+            'stages.$.timeCompleted': now
+        };
+        await this.processInstanceRepositoryImpl.updateMany( condition, setValues );
+        for ( const instance of instances ) {
+            this.iterateNextStages( { _id: instance._id, status: instance.status }, instance.stages[ 0 ].nextStages );
+        };
+        // this.webhook.callWebhook(Webhooks.UPDATE_INSTANCE, response);
 
     }
 
