@@ -475,6 +475,10 @@ export class Executor implements OnModuleInit {
         let isValid = true;
         let _error = error;
         for (let field of properties) {
+            if (!field) {
+                isValid = false;
+                return [isValid, `${_error}.[properties] should not contain null value`, parameters];
+            }
             let fieldData = parameters[field.key]
             if (fieldData === undefined) {
                 if (field?.value?.default !== undefined) {
