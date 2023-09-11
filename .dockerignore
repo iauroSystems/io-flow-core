@@ -37,3 +37,4 @@ src/shared/clients/gRPC/*
 workflows
 test
 e2e
+src/shared/public
