@@ -1,0 +1,213 @@
+{
+  "name": "invoice_processing",
+  "key": "653909c90aecd59c0bb6c244",
+  "description": "Description",
+  "isParallel": false,
+  "properties": [],
+  "criteria": {
+    "allCompleted": true,
+    "anyCompleted": false,
+    "allActivitiesCompleted": true,
+    "anyActivitiesCompleted": false,
+    "allSuccess": false,
+    "anySuccess": false,
+    "onErrorComplete": true,
+    "showError": false,
+    "retry": false,
+    "retries": 3,
+    "retryInterval": 2000
+  },
+  "stages": [
+    {
+      "key": "event_GXSdGkD2",
+      "name": "Start",
+      "displayName": "Invoice Creation",
+      "description": "The invoice is created",
+      "type": "event",
+      "subType": "start",
+      "nextStages": [
+        "activity_fZD8WcPX"
+      ]
+    },
+    {
+      "key": "event_L6QZAqzG",
+      "name": "End",
+      "displayName": "End",
+      "description": "",
+      "type": "event",
+      "subType": "end"
+    },
+    {
+      "key": "activity_fZD8WcPX",
+      "name": "Validate Invoice",
+      "displayName": "Validate Invoice",
+      "description": "",
+      "type": "activity",
+      "subType": "system-task",
+      "nextStages": [
+        "activity_ItEKyCd2"
+      ],
+      "mandatory": false,
+      "auto": true,
+      "connector": {
+        "config": {
+          "url": "https://gessa.io/gessa-demo-service/demo?page=0&size=10",
+          "method": "Get",
+          "headers": {},
+          "timeout": 0,
+          "data": {}
+        },
+        "type": "rest"
+      },
+      "properties": []
+    },
+    {
+      "key": "activity_ItEKyCd2",
+      "name": "Approve / Deny ",
+      "displayName": "Approve / Deny ",
+      "description": "",
+      "type": "activity",
+      "subType": "user-task",
+      "nextStages": [
+        "gateway_zl0qIRbn"
+      ],
+      "mandatory": false,
+      "connector": null,
+      "customParams": {
+        "pageId": "",
+        "formId": ""
+      },
+      "properties": []
+    },
+    {
+      "key": "activity_OVaJ6ZX3",
+      "name": "Notify Approval",
+      "displayName": "Notify Approval",
+      "description": "",
+      "type": "activity",
+      "subType": "system-task",
+      "nextStages": [
+        "activity_fxAgWUzO"
+      ],
+      "mandatory": false,
+      "auto": true,
+      "connector": {
+        "config": {
+          "url": "https://gessa.io/gessa-demo-service/demo?page=0&size=10",
+          "method": "Get",
+          "headers": {},
+          "timeout": 0,
+          "data": {}
+        },
+        "type": "rest"
+      },
+      "properties": []
+    },
+    {
+      "key": "activity_2xsF9jWP",
+      "name": "Notify Denial",
+      "displayName": "Notify Denial",
+      "description": "",
+      "type": "activity",
+      "subType": "system-task",
+      "nextStages": [
+        "event_NOG8aHn0"
+      ],
+      "mandatory": false,
+      "auto": true,
+      "connector": {
+        "config": {
+          "url": "https://gessa.io/gessa-demo-service/demo?page=0&size=10",
+          "method": "Get",
+          "headers": {},
+          "timeout": 0,
+          "data": {}
+        },
+        "type": "rest"
+      },
+      "properties": []
+    },
+    {
+      "key": "event_NOG8aHn0",
+      "name": "End3",
+      "displayName": "End3",
+      "description": "",
+      "type": "event",
+      "subType": "end"
+    },
+    {
+      "key": "activity_fxAgWUzO",
+      "name": "Process Payment",
+      "displayName": "Process Payment",
+      "description": "",
+      "type": "activity",
+      "subType": "system-task",
+      "nextStages": [
+        "activity_UD7eI6gL"
+      ],
+      "mandatory": false,
+      "auto": true,
+      "connector": {
+        "config": {
+          "url": "https://gessa.io/gessa-demo-service/demo?page=0&size=10",
+          "method": "Get",
+          "headers": {},
+          "timeout": 0,
+          "data": {}
+        },
+        "type": "rest"
+      },
+      "properties": []
+    },
+    {
+      "key": "activity_UD7eI6gL",
+      "name": "Update In Records",
+      "displayName": "Update In Records",
+      "description": "",
+      "type": "activity",
+      "subType": "system-task",
+      "nextStages": [
+        "event_L6QZAqzG"
+      ],
+      "mandatory": false,
+      "auto": true,
+      "connector": {
+        "config": {
+          "url": "https://gessa.io/gessa-demo-service/demo?page=0&size=10",
+          "method": "Post",
+          "headers": {},
+          "timeout": 0,
+          "data": {}
+        },
+        "type": "rest"
+      },
+      "properties": []
+    },
+    {
+      "key": "gateway_zl0qIRbn",
+      "name": "Check Status",
+      "displayName": "Check Status",
+      "description": "",
+      "type": "gateway",
+      "subType": "exclusive",
+      "nextStages": [
+        "activity_OVaJ6ZX3"
+      ],
+      "conditions": [
+        {
+          "name": "ifApproved",
+          "op": "and",
+          "expressions": [
+            {
+              "lhs": "true",
+              "op": "==",
+              "rhs": "true"
+            }
+          ],
+          "onTrueNextStage": "activity_2xsF9jWP"
+        }
+      ]
+    }
+  ],
+  "assigneeConnector": null
+}
