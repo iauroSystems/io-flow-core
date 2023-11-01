@@ -91,6 +91,10 @@ CI/CD Tools: Utilize popular CI/CD tools like Jenkins, GitLab CI/CD, CircleCI, o
 Configure CI/CD Pipeline: Set up a pipeline that automatically builds and deploys your NestJS application whenever changes are pushed to the repository. Define the necessary build steps, testing, and deployment instructions.
 
 Please note that the specific steps and commands may vary depending on your environment, preferences, and deployment targets. It's always a good practice to consult the official documentation for the tools and platforms you choose to ensure accurate and up-to-date information.
+
+## How to use IO Flow?
+
+[IO Flow Kickstart Guide](HOW_TO_USE.md) Follow these instructions to create, configure, and integrate workflows into your applications.
 ## Authors
 
 - [Sudhir Raut](https://github.com/sudhir-raut)
