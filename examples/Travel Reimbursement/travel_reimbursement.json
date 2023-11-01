@@ -1,0 +1,169 @@
+{
+    "name": "travelReimbursementWorkflow",
+    "key": "653906530aecd59c0bb6c1ea",
+    "description": "Description",
+    "isParallel": false,
+    "properties": [],
+    "criteria": {
+      "allCompleted": true,
+      "anyCompleted": false,
+      "allActivitiesCompleted": true,
+      "anyActivitiesCompleted": false,
+      "allSuccess": false,
+      "anySuccess": false,
+      "onErrorComplete": true,
+      "showError": false,
+      "retry": false,
+      "retries": 3,
+      "retryInterval": 2000
+    },
+    "stages": [
+      {
+        "key": "event_KkhPbZpy",
+        "name": "Start",
+        "displayName": "Start",
+        "description": "",
+        "type": "event",
+        "subType": "start",
+        "nextStages": [
+          "activity_Uh1CDYOG"
+        ]
+      },
+      {
+        "key": "activity_Uh1CDYOG",
+        "name": "Submit Request",
+        "displayName": "Submit Request",
+        "description": "Employee submits a travel expense reimbursement request, attaching all relevant receipts and documents.",
+        "type": "activity",
+        "subType": "user-task",
+        "nextStages": [
+          "gateway_erygmG14"
+        ],
+        "mandatory": false,
+        "connector": null,
+        "customParams": {
+          "pageId": "",
+          "formId": ""
+        },
+        "properties": []
+      },
+      {
+        "key": "gateway_erygmG14",
+        "name": "Approval Required?",
+        "displayName": "Approval Required?",
+        "description": "",
+        "type": "gateway",
+        "subType": "exclusive",
+        "nextStages": [
+          "activity_j9ilQCEg"
+        ],
+        "conditions": [
+          {
+            "name": "Manager Approval",
+            "op": "and",
+            "expressions": [
+              {
+                "lhs": "input",
+                "op": "==",
+                "rhs": "true"
+              }
+            ],
+            "onTrueNextStage": "activity_7WvUGL6l"
+          }
+        ]
+      },
+      {
+        "key": "activity_7WvUGL6l",
+        "name": "Manager Approval",
+        "displayName": "Manager Approval",
+        "description": "Manager reviews the reimbursement request and approves or rejects it.",
+        "type": "activity",
+        "subType": "user-task",
+        "nextStages": [
+          "gateway_awFDW3v9"
+        ],
+        "mandatory": false,
+        "connector": null,
+        "customParams": {
+          "pageId": "",
+          "formId": ""
+        },
+        "properties": []
+      },
+      {
+        "key": "activity_j9ilQCEg",
+        "name": "Process Payment",
+        "displayName": "Process Payment",
+        "description": "The system processes the approved reimbursement request and prepares the payment.",
+        "type": "activity",
+        "subType": "system-task",
+        "nextStages": [
+          "activity_i5vUYDS1"
+        ],
+        "mandatory": false,
+        "auto": false,
+        "connector": null,
+        "properties": []
+      },
+      {
+        "key": "activity_i5vUYDS1",
+        "name": "Payment Notification",
+        "displayName": "Payment Notification",
+        "description": "The employee receives a notification and confirms the payment receipt.",
+        "type": "activity",
+        "subType": "user-task",
+        "nextStages": [
+          "event_7aPtDeS2"
+        ],
+        "mandatory": false,
+        "connector": null,
+        "customParams": {
+          "pageId": "",
+          "formId": ""
+        },
+        "properties": []
+      },
+      {
+        "key": "event_SV6bTK7T",
+        "name": "End",
+        "displayName": "End",
+        "description": "",
+        "type": "event",
+        "subType": "end"
+      },
+      {
+        "key": "gateway_awFDW3v9",
+        "name": "Manager Decision",
+        "displayName": "Manager Decision",
+        "description": "",
+        "type": "gateway",
+        "subType": "exclusive",
+        "nextStages": [
+          "activity_j9ilQCEg"
+        ],
+        "conditions": [
+          {
+            "name": "if_rejected",
+            "op": "and",
+            "expressions": [
+              {
+                "lhs": "true",
+                "op": "==",
+                "rhs": "true"
+              }
+            ],
+            "onTrueNextStage": "event_SV6bTK7T"
+          }
+        ]
+      },
+      {
+        "key": "event_7aPtDeS2",
+        "name": "End2",
+        "displayName": "End2",
+        "description": "",
+        "type": "event",
+        "subType": "end"
+      }
+    ],
+    "assigneeConnector": null
+  }
