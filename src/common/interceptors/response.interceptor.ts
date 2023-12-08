@@ -21,13 +21,11 @@ export class ResponseInterceptor implements NestInterceptor {
 
     const { ip, method, originalUrl, body } = request;
     const userAgent = request.get('user-agent') || '';
-    const tenantId = request.get('x-tenant-id') || '';
-
     response.on('close', () => {
       const { statusCode } = response;
-      if (statusCode < 400) {
+      if (statusCode < 400 && originalUrl !== '/v1/timer') {
         const contentLength = response.get('content-length');
-        this.logger.log(`[${tenantId}]: ${method} ${originalUrl} --> ${statusCode} ${contentLength} - ${userAgent} ${ip}`);
+        this.logger.log(`${method} ${originalUrl} --> ${statusCode} ${contentLength} - ${userAgent} ${ip}`);
       }
     });
     // if (response.status === 201)

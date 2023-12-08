@@ -12,8 +12,9 @@ export class AppLoggerMiddleware implements NestMiddleware {
     const tenantId = request.get('x-tenant-id') || '';
 
     response.on('close', () => {
+      console.log('&&&&&&&&&&&&&& ', originalUrl);
       const { statusCode } = response;
-      if (statusCode < 400) {
+      if (statusCode < 400 && originalUrl !== '/v1/timer') {
         const contentLength = response.get('content-length');
         this.logger.log(`[${tenantId}]: ${method} ${originalUrl} --> ${statusCode} ${contentLength} - ${userAgent} ${ip}`);
       }
