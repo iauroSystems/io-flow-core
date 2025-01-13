@@ -54,8 +54,8 @@ export class TasksController {
 
 
   @ApiExcludeEndpoint()
-  @Get( 'timer' )
-  async updateTimer (): Promise<CustomResponse | CustomError> {
+  @Get('timer')
+  async updateTimer(): Promise<CustomResponse | CustomError> {
     return this.tasksService.updateTimer();
   }
 }

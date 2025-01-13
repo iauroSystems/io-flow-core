@@ -1,0 +1,216 @@
+{
+    "name": "Hiring Flow",
+    "description": "Process to hiring a candidate",
+    "key": "KEY123",
+    "properties": [
+        {
+            "key": "name",
+            "value": {
+                "type": "string",
+                "default": "",
+                "required": true
+            }
+        },
+        {
+            "key": "job",
+            "value": {
+                "type": "string",
+                "default": "",
+                "required": true
+            }
+        },
+        {
+            "key": "emailId",
+            "value": {
+                "type": "string",
+                "default": "",
+                "required": true
+            }
+        }
+    ],
+    "assigneeConnector": null,
+    "stages": [
+        {
+            "key": "start1",
+            "name": "start stage",
+            "description": "string",
+            "type": "event",
+            "subType": "start",
+            "nextStages": [
+                "key-2"
+            ]
+        },
+        {
+            "key": "A1",
+            "name": "Application Recieved",
+            "description": "Desc",
+            "type": "activity",
+            "subType": "system-task",
+            "mandatory": true,
+            "nextStages": [
+                "A2"
+            ],
+            "connector": {
+                "type": "rest",
+                "config": {
+                    "url": "https://reqres.in/api/users",
+                    "method": "post",
+                    "data": {}
+                }
+            }
+        },
+        {
+            "key": "A2",
+            "name": "Screen Resume",
+            "description": "Desc",
+            "type": "activity",
+            "subType": "user-task",
+            "mandatory": true,
+            "nextStages": [
+                "G1"
+            ],
+            "properties": [
+                {
+                    "key": "qualified",
+                    "value": {
+                        "type": "boolean",
+                        "default": false,
+                        "required": true
+                    }
+                }
+            ]
+        },
+        {
+            "key": "G1",
+            "name": "Is Qalified",
+            "description": "string",
+            "type": "gateway",
+            "subType": "exclusive",
+            "nextStages": [
+                "end1"
+            ],
+            "conditions": [
+                {
+                    "name": "Qalified?",
+                    "op": "AND",
+                    "expressions": [
+                        {
+                            "lhs": "$[stages.<A2>.parameters.qualified]",
+                            "op": "==",
+                            "rhs": true
+                        }
+                    ],
+                    "onTrueNextStage": "A3"
+                }
+            ]
+        },
+        {
+            "key": "A3",
+            "name": "Interview Round 1",
+            "description": "Desc",
+            "type": "activity",
+            "subType": "user-task",
+            "mandatory": true,
+            "nextStages": [
+                "G2"
+            ],
+            "properties": [
+                {
+                    "key": "qualified",
+                    "value": {
+                        "type": "boolean",
+                        "default": false,
+                        "required": true
+                    }
+                }
+            ]
+        },
+        {
+            "key": "G2",
+            "name": "Is Qalified",
+            "description": "string",
+            "type": "gateway",
+            "subType": "exclusive",
+            "nextStages": [
+                "end1"
+            ],
+            "conditions": [
+                {
+                    "name": "Qalified?",
+                    "op": "AND",
+                    "expressions": [
+                        {
+                            "lhs": "$[stages.<A3>.parameters.qualified]",
+                            "op": "==",
+                            "rhs": true
+                        }
+                    ],
+                    "onTrueNextStage": "A4"
+                }
+            ]
+        },
+        {
+            "key": "A4",
+            "name": "Final Round",
+            "description": "Desc",
+            "type": "activity",
+            "subType": "user-task",
+            "mandatory": true,
+            "nextStages": [
+                "G3"
+            ],
+            "properties": [
+                {
+                    "key": "qualified",
+                    "value": {
+                        "type": "boolean",
+                        "default": false,
+                        "required": true
+                    }
+                }
+            ]
+        },
+        {
+            "key": "G3",
+            "name": "Is Qalified",
+            "description": "string",
+            "type": "gateway",
+            "subType": "exclusive",
+            "nextStages": [
+                "end1"
+            ],
+            "conditions": [
+                {
+                    "name": "Qalified?",
+                    "op": "AND",
+                    "expressions": [
+                        {
+                            "lhs": "$[stages.<A4>.parameters.qualified]",
+                            "op": "==",
+                            "rhs": true
+                        }
+                    ],
+                    "onTrueNextStage": "A5"
+                }
+            ]
+        },
+        {
+            "key": "A5",
+            "name": "Send Offer Letter",
+            "description": "Trigger communication",
+            "type": "activity",
+            "subType": "system-task",
+            "mandatory": false,
+            "nextStages": [
+                "end1"
+            ]
+        },
+        {
+            "key": "end1",
+            "name": "end stage",
+            "description": "end process",
+            "type": "event",
+            "subType": "end"
+        }
+    ]
+}

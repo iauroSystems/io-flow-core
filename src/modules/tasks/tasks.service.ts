@@ -412,9 +412,9 @@ export class TasksService {
     return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, stats[0]);
   }
 
-  async updateTimer () {
+  async updateTimer() {
     this.execute.makeTimerEventEnd();
-    return new CustomResponse( HttpStatus.OK, CustomMessages.SUCCESS );
+    return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS);
   }
 
 }

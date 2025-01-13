@@ -34,7 +34,8 @@ export class Constants {
     ERROR: 'error',
     STARTED: 'started',
     ON_HOLD: 'on-hold',
-    CANCELLED: 'cancelled'
+    CANCELLED: 'cancelled',
+    RUNNING: 'running'
   }
 }
 
