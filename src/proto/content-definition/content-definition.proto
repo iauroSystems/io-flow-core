@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package app;
+
+import "src/proto/common-requests.proto";
+import "src/proto/content-definition/content-definition-response.proto";
+import "src/proto/content-definition/content-definition-request.proto";
+
+service ContentDefinitionController {
+  rpc FindAllContentDefinition (FetchAllRequest) returns (ContentDefinitionListResponse) {};
+  rpc FindContentDefinitionById (Id) returns (ContentDefinitionResponse) {};
+  rpc CreateContentDefinition (CreateContentDefinitionRequest) returns (ContentDefinitionResponse) {};
+  rpc UpdateContentDefinition (UpdateContentDefinitionRequest) returns (ContentDefinitionResponse) {};
+  rpc AddDataFieldChild (AddDataFieldChildRequest) returns (ContentDefinitionResponse) {};
+  rpc DeleteContentDefinition (Id) returns (ContentDefinitionResponse) {};
+}
+

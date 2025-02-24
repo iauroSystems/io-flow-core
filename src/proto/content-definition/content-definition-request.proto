@@ -1,0 +1,70 @@
+ syntax = "proto3";
+
+ package app;
+ 
+ message CreateContentDefinitionRequest {
+    repeated ContentDefinitionData fields = 1;
+    string type = 2;
+    string encryptKey = 3;
+    int32 isDelete = 4;
+}
+
+
+
+message UpdateContentDefinitionRequest {
+    string id = 1;
+    CreateContentDefinitionRequestBody body = 2;
+}
+
+
+message CreateContentDefinitionRequestBody {
+   repeated ContentDefinitionData fields = 2;
+   string type = 3;
+   string encryptKey = 4;
+   int32 isDelete = 5;
+}
+
+message AddDataFieldChildRequest {
+    string id = 1;
+    ContentDefinitionData body = 2;
+}
+
+
+
+message ContentDefinitionData {
+    string key = 1;
+    string dataType = 2;
+    string arrayOf = 3;
+    repeated ContentDefinitionData1 objectSchema = 4;
+    bool mandatory = 5;
+    bool searchable = 6;
+    bool indexable = 7;
+    bool reportable = 8;
+    bool filterable = 9;
+}
+
+
+message ContentDefinitionData1 {
+    string key = 1;
+    string dataType = 2;
+    string arrayOf = 3;
+    ContentDefinitionData2 objectSchema = 4;
+    bool mandatory = 5;
+    bool searchable = 6;
+    bool indexable = 7;
+    bool reportable = 8;
+    bool filterable = 9;
+}
+
+
+message ContentDefinitionData2 {
+    string key = 1;
+    string dataType = 2;
+    string arrayOf = 3;
+    ContentDefinitionData1 objectSchema = 4;
+    bool mandatory = 5;
+    bool searchable = 6;
+    bool indexable = 7;
+    bool filterable = 9;
+    bool reportable = 8;
+}

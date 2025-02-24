@@ -1,29 +1,38 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Headers, Patch, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query, Headers, Patch, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import CustomResponse from 'src/common/providers/custom-response.service';
 import CustomError from 'src/common/exceptions/custom-error';
-import { ProcessInstance, ProcessInstanceDocument } from 'src/models/process-instances/process-instances.schema';
-import { CreateProcessInstanceDto, GetProcessInstanceStatsQueryDto, GetProcessInstanceQueryDto, GetOneProcessInstanceQueryDto, UpdateProcessInstanceDto, UpdateProcessInstanceQueryDto } from './dtos';
+import { CreateProcessInstanceDto, GetProcessInstanceStatsQueryDto, GetProcessInstanceQueryDto, GetOneProcessInstanceQueryDto, UpdateProcessInstanceDto, UpdateProcessInstanceQueryDto, GetProcessInstanceStageStatsQueryDto } from './dtos';
 import { ProcessInstanceService } from './process-instances.service';
 import { CommonHeadersDto } from 'src/shared/dtos';
+// import { AuthGuard } from '@gessa/authguard';
+import CustomGrpcResponse from 'src/common/providers/custom-grpc-response.service';
 @ApiTags('Process Instances')
 @Controller('process-instances')
+// @ApiBearerAuth()
+// @UseGuards(AuthGuard)
+// @ApiHeader({
+//   name: 'authorization',
+//   description: 'Bearer token',
+//   required: true,
+// })
+// @UseGuards(new AuthGuard(`${process.env.RBAC_GRPC_URL}:${process.env.RBAC_GRPC_PORT}`, true))
 
 export class ProcessInstanceController {
   constructor (private processInstanceService: ProcessInstanceService) { }
 
   @Post(':processDefinitionId')
-  async createByDefinitionId(@Headers() headers: CommonHeadersDto, @Param('processDefinitionId') processDefinitionId: string): Promise<CustomResponse | CustomError> {
-    return this.processInstanceService.createByDefinitionId(headers, processDefinitionId);
+  async createByDefinitionId(@Headers() headers: CommonHeadersDto, @Param('processDefinitionId') processDefinitionId: string, @Query() query: GetOneProcessInstanceQueryDto): Promise<CustomResponse | CustomError | CustomGrpcResponse> {
+    return this.processInstanceService.createByDefinitionId(headers, processDefinitionId, query);
   }
 
   @Post('key/:key')
-  async createByDefinitionKey(@Headers() headers: CommonHeadersDto, @Param('key') key: string, @Query() query: GetOneProcessInstanceQueryDto): Promise<CustomResponse | CustomError> {
+  async createByDefinitionKey(@Headers() headers: CommonHeadersDto, @Param('key') key: string, @Query() query: GetOneProcessInstanceQueryDto): Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     return this.processInstanceService.createByDefinitionKey(headers, query, key);
   }
 
   @Post(':processInstanceId/start')
-  async start(@Headers() headers: CommonHeadersDto, @Param('processInstanceId') processInstanceId: string, @Body() createProcessInstanceDto: CreateProcessInstanceDto): Promise<CustomResponse | CustomError> {
+  async start(@Headers() headers: CommonHeadersDto, @Param('processInstanceId') processInstanceId: string, @Body() createProcessInstanceDto: CreateProcessInstanceDto): Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     return this.processInstanceService.start(processInstanceId, createProcessInstanceDto);
   }
 
@@ -58,13 +67,24 @@ export class ProcessInstanceController {
   }
 
   @Post('run/:processDefinitionId')
-  async runByDefinitionId(@Headers() headers: CommonHeadersDto, @Param('processDefinitionId') processDefinitionId: string, @Body() createProcessInstanceDto: CreateProcessInstanceDto): Promise<CustomResponse | CustomError> {
+  async runByDefinitionId(@Headers() headers: CommonHeadersDto, @Param('processDefinitionId') processDefinitionId: string, @Body() createProcessInstanceDto: CreateProcessInstanceDto): Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     return this.processInstanceService.runByDefinitionId(headers, processDefinitionId, createProcessInstanceDto);
   }
 
   @Post('run/key/:key')
-  async runByDefinitionKey(@Headers() headers: CommonHeadersDto, @Param('key') key: string, @Query() query: GetOneProcessInstanceQueryDto, @Body() createProcessInstanceDto: CreateProcessInstanceDto): Promise<CustomResponse | CustomError> {
+  async runByDefinitionKey(@Headers() headers: CommonHeadersDto, @Param('key') key: string, @Query() query: GetOneProcessInstanceQueryDto, @Body() createProcessInstanceDto: CreateProcessInstanceDto): Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     return this.processInstanceService.runByDefinitionKey(headers, query, key, createProcessInstanceDto);
+  }
+
+  @Get('/stages/stats')
+  async getAllStageStats(@Headers() headers: CommonHeadersDto, @Query() query: GetProcessInstanceStageStatsQueryDto): Promise<CustomResponse | CustomError> {
+    return this.processInstanceService.getStageStats(query);
+    // return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, query);
+  }
+
+  @Get('/mostfrequentpath/:processDefinitionId/list')
+  async mostFrequentPath(@Headers() headers: CommonHeadersDto, @Param('processDefinitionId') processDefinitionId: string): Promise<CustomResponse | CustomError> {
+    return this.processInstanceService.mostFollowedPath(processDefinitionId);
   }
 
 }

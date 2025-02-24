@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package app;
+
+import "./process-intances-request.proto";
+import "./process-intances-response.proto";
+
+service ProcessIntanceGrpcService {
+    rpc Create (CreateInstancesRequest) returns (ProcessInstancesResponse) {};
+    rpc CreateByDefinitionKey (CreateInstancesRequestKey) returns (ProcessInstancesResponse) {};
+    rpc Start (startRequest) returns (startResponse) {};
+    rpc RunByDefinitionId (runByIdRequest) returns (ProcessInstancesResponse) {};
+    rpc RunByDefinitionKey (runRequest) returns (ProcessInstancesResponse) {};
+}

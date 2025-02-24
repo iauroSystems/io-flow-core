@@ -1,7 +1,7 @@
 import {
     IsOptional, IsNotEmpty, IsNotEmptyObject
 } from 'class-validator';
-import { AxiosRequestConfig } from 'axios';
+import { AxiosRequestConfig, CustomParamsSerializer, ParamsSerializerOptions } from 'axios';
 
 export class HttpConnectorDto implements AxiosRequestConfig {
     url: string;
@@ -18,6 +18,12 @@ export class HttpConnectorDto implements AxiosRequestConfig {
 
     @IsOptional()
     data?: any;
+
+    @IsOptional()
+    timeout?: number;
+
+    @IsOptional()
+    paramsSerializer?: ParamsSerializerOptions | CustomParamsSerializer;
 }
 
 class GrpcServiceOptions {
@@ -53,11 +59,69 @@ export class GrpcConnectorDto {
     methodOptions: GrpcMethodOptions;
 }
 
-export class OpenAIConnectorDto{
-    prompt: string;
-    apiKey: string;
-    
+export class SoapConnectorDto {
+    @IsOptional()
+    url: string;
+
+    method: string;
+
     @IsOptional()
     data?: any;
-    
+}
+export class KafkaConnectorDto {
+    operation: string;
+
+    clientId: any;
+
+    broker: string;
+
+    topic: string;
+
+    data: any;
+}
+
+export class MySQLConnectorDto {
+    @IsNotEmpty()
+    hostname: string;
+
+    @IsNotEmpty()
+    port: number;
+
+    user: string;
+
+    password: string;
+
+    encryptedPassword: string;
+
+    @IsNotEmpty()
+    databaseName: string;
+
+    @IsNotEmpty()
+    query: string;
+
+    @IsNotEmpty()
+    encryptedQuery: string;
+}
+
+export class PostgesConnectorDto {
+    @IsNotEmpty()
+    hostname: string;
+
+    @IsNotEmpty()
+    port: number;
+
+    user: string;
+
+    password: string;
+
+    encryptedPassword: string;
+
+    @IsNotEmpty()
+    databaseName: string;
+
+    @IsNotEmpty()
+    query: string;
+
+    @IsNotEmpty()
+    encryptedQuery: string;
 }

@@ -1,13 +1,14 @@
+import { Prop } from '@nestjs/mongoose';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsArray,
     IsEnum,
     IsOptional,
     IsString,
-    Length
+    Length,
+    Max
 } from 'class-validator'
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
-
 
 export class UpdateStageParams {
     @ApiPropertyOptional()
@@ -24,13 +25,18 @@ export class UpdateStageParams {
 class Config {
 
 }
+
 class Connector {
-    @ApiProperty({ type: String })
-    @IsEnum(ConnectorTypes)
+    @ApiProperty( { type: String } )
+    @IsEnum( ConnectorTypes )
     type: ConnectorTypes;
 
     @ApiProperty()
-    config: Config
+    config: Config;
+
+    @ApiProperty()
+    @IsOptional()
+    connectorId: string;
 }
 
 class PropertyType {
@@ -63,36 +69,41 @@ class StageCriteria {
     @ApiProperty({ default: false })
     @IsOptional()
     showError: boolean;
-}
 
-class Expression {
-    @ApiProperty()
-    lhs: any;
+    @ApiProperty({ default: false })
+    @IsOptional()
+    retry: boolean;
 
-    @ApiProperty()
-    op: string;
+    @ApiProperty({ default: 3 })
+    @IsOptional()
+    @Max(5)
+    retries: number;
 
-    @ApiProperty()
-    rhs: any;
+    @ApiProperty({ default: 2000 })
+    @IsOptional()
+    @Max(5000)
+    retryIntervalMs: number;
 }
 
 class Condition {
-    @ApiProperty()
+    @Prop()
     name: string;
 
-    @ApiProperty()
-    op: string;
+    @Prop()
+    expression: string;
 
-    @ApiProperty({ type: [Expression] })
-    expressions: Expression[]
+    @Prop( { type: {} } )
+    variables: {};
 
-    @ApiProperty()
+    @Prop()
+    _valid: boolean;
+
+    @Prop()
     onTrueNextStage: string;
 
-    @ApiProperty()
-    onFalseNextStage: string
+    @Prop()
+    onFalseNextStage: string;
 }
-
 
 export class UpdateStageBody {
     @ApiProperty({ type: String })
@@ -131,11 +142,6 @@ export class UpdateStageBody {
     nextStages: string[];
 
     @IsArray()
-    @ApiProperty({ type: [Property] })
-    @IsOptional()
-    properties?: Property[];
-
-    @IsArray()
     @ApiProperty({ type: [Condition] })
     @IsOptional()
     conditions?: Condition[];
@@ -149,7 +155,7 @@ export class UpdateStageBody {
     @IsOptional()
     criteria?: StageCriteria;
 
-    @ApiProperty({ type: Connector })
+    @ApiProperty( { type: Connector } )
     @IsOptional()
     connector?: Connector;
 
@@ -157,4 +163,8 @@ export class UpdateStageBody {
     @IsOptional()
     @Length(24, 24)
     processDefinitionId?: string;
+
+    @ApiProperty({ type: String })
+    @IsOptional()
+    formId?: string;
 }

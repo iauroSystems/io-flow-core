@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, Types, Schema as SchemaTypes } from 'mongoose';
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
 
-
 export type ProcessInstanceDocument = ProcessInstance & Document;
 
 class Dependency extends Document {
@@ -13,24 +12,12 @@ class Dependency extends Document {
   stageKey: string;
 }
 
-class Expression extends Document {
-  @Prop()
-  lhs: SchemaTypes.Types.Mixed;
+class Connector {
+  @Prop({ type: String, enum: ConnectorTypes })
+  type: ConnectorTypes;
 
   @Prop()
-  op: string;
-
-  @Prop()
-  rhs: SchemaTypes.Types.Mixed
-
-  @Prop()
-  _lhs: SchemaTypes.Types.Mixed;
-
-  @Prop()
-  _rhs: SchemaTypes.Types.Mixed
-
-  @Prop()
-  _valid: boolean;
+  config: SchemaTypes.Types.Mixed;
 }
 
 class Condition extends Document {
@@ -38,22 +25,19 @@ class Condition extends Document {
   name: string;
 
   @Prop()
-  op: string;
+  expression: string;
 
-  @Prop({ type: [Expression] })
-  expressions: Expression[]
-
-  @Prop()
-  _allValid: boolean;
+  @Prop({ type: {} })
+  variables: {};
 
   @Prop()
-  _anyValid: boolean;
+  _valid: boolean;
 
   @Prop()
   onTrueNextStage: string;
 
   @Prop()
-  onFalseNextStage: string
+  onFalseNextStage: string;
 }
 
 class Params extends Document {
@@ -63,41 +47,12 @@ class Params extends Document {
 
 class stageIndexJSON extends Document {
 }
-class PropertyType extends Document {
-  @Prop()
-  type: string;
-
-  @Prop()
-  arrayOf: string;
-
-  @Prop()
-  default: string;
-
-  @Prop()
-  required: boolean;
-
-  @Prop()
-  enum: [any];
-
-  @Prop()
-  properties: [any];
-
-  @Prop()
-  displayType: string;
-}
-
-class Property extends Document {
-  @Prop()
-  key: string;
-
-  @Prop()
-  section: string;
-
-  @Prop({ type: PropertyType })
-  value: PropertyType;
-}
 
 class DefinitionCriteria extends Document {
+
+  @Prop({ type: Boolean, default: false })
+  showError: boolean;
+
   @Prop()
   allCompleted: boolean;
 
@@ -126,6 +81,15 @@ class StageCriteria extends Document {
 
   @Prop({ type: Boolean, default: false })
   showError: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  retry: boolean;
+
+  @Prop({ type: Number, default: 2 })
+  retries: number;
+
+  @Prop({ type: Number, default: 2000 })
+  retryIntervalMs: number;
 }
 
 class Flags extends Document {
@@ -154,14 +118,6 @@ class Flags extends Document {
   _mandatoryCompleted: boolean;
 }
 
-class Connector {
-  @Prop({ type: String, enum: ConnectorTypes })
-  type: ConnectorTypes;
-
-  @Prop()
-  config: SchemaTypes.Types.Mixed
-}
-
 class History {
   @Prop()
   status: string;
@@ -182,16 +138,16 @@ class History {
   _flags: Flags;
 
   @Prop()
-  _error: SchemaTypes.Types.Mixed
+  _error: SchemaTypes.Types.Mixed;
 
   @Prop()
-  _data: SchemaTypes.Types.Mixed
+  _data: SchemaTypes.Types.Mixed;
 
 }
 
 @Schema()
 class StageInstanceSchema {
-  _id: Types.ObjectId
+  _id: Types.ObjectId;
 
   @Prop()
   key: string;
@@ -220,8 +176,11 @@ class StageInstanceSchema {
   @Prop({ default: true })
   auto: boolean; // execute stage automatically or trigger manually
 
-  // @Prop({ default: false })
-  // disabled: boolean; // disable stage
+  @Prop({ default: false })
+  isIterative: boolean; // isIterative stage
+
+  @Prop({ required: true, default: 1 })
+  iterationsCount: number;
 
   @Prop({ default: true })
   mandatory: boolean; // disable stage
@@ -229,14 +188,11 @@ class StageInstanceSchema {
   @Prop({ type: [String] })
   nextStages: string[];
 
-  @Prop([Property])
-  properties: Property[];
+  @Prop({ type: [String] })
+  prevStages: string[];
 
   @Prop([Condition])
   conditions?: Condition[];
-
-  @Prop([String])
-  parallelStages: string[];
 
   @Prop(Params)
   parameters?: Params;
@@ -275,10 +231,10 @@ class StageInstanceSchema {
   _flags: Flags;
 
   @Prop()
-  _error: SchemaTypes.Types.Mixed
+  _error: SchemaTypes.Types.Mixed;
 
   @Prop()
-  _data: SchemaTypes.Types.Mixed
+  _data: SchemaTypes.Types.Mixed;
 
   @Prop()
   processDefinitionId?: string;
@@ -290,7 +246,16 @@ class StageInstanceSchema {
   processInstanceId?: string;
 
   @Prop([History])
-  history: History[]
+  history: History[];
+
+  @Prop([Dependency])
+  dependencies: Dependency[];
+
+  @Prop()
+  formId?: string;
+
+  @Prop()
+  customParams?: SchemaTypes.Types.Mixed;
 
 }
 
@@ -336,9 +301,6 @@ export class ProcessInstance extends Document {
   @Prop({ required: true })
   version: number;
 
-  @Prop([Property])
-  properties: Property[];
-
   @Prop(Params)
   parameters: Params;
 
@@ -367,7 +329,7 @@ export class ProcessInstance extends Document {
   status: string;
 
   @Prop(stageIndexJSON)
-  _stageIndexJSON: stageIndexJSON
+  _stageIndexJSON: stageIndexJSON;
 
   @Prop({ type: Flags, default: {} })
   _flags: Flags;
@@ -380,6 +342,12 @@ export class ProcessInstance extends Document {
 
   @Prop({ type: Connector })
   assigneeConnector?: Connector; // this field is temporary
+
+  @Prop()
+  formId?: string;
+
+  @Prop([Dependency])
+  dependencies: Dependency[];
 
   @Prop(User)
   createdBy: User;
@@ -395,3 +363,11 @@ export class ProcessInstance extends Document {
 }
 
 export const ProcessInstanceSchema = SchemaFactory.createForClass(ProcessInstance);
+ProcessInstanceSchema.index({ processDefinitionId: 1 });
+ProcessInstanceSchema.index({ processDefinitionKey: 1 });
+ProcessInstanceSchema.index({ parentProcessInstanceId: 1 })
+ProcessInstanceSchema.index({ rootProcessInstanceId: 1 });
+ProcessInstanceSchema.index({ processDefinitionKey: 1, version: 1 });
+ProcessInstanceSchema.index({ processDefinitionId: 1, version: 1 });
+ProcessInstanceSchema.index({ status: 1 });
+

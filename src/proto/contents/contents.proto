@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package app;
+
+import "src/proto/common-requests.proto";
+import "src/proto/contents/contents-request.proto";
+import "src/proto/contents/contents-response.proto";
+
+service ContentsController {
+  rpc FindAllData (FetchAllRequest) returns (ContentsResponse) {};
+  rpc FindDataById (Id) returns (ContentsResponse) {};
+  rpc CreateData (CreateContentsRequest) returns (ContentsResponse) {};
+  rpc UpdateData (UpdateContentsRequest) returns (ContentsResponse) {};
+  rpc DeleteData (Id) returns (ContentsResponse) {};
+}

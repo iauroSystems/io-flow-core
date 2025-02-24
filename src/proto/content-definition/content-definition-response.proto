@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package app;
+
+
+message ContentDefinitionResponse {
+  int32 statusCode = 1;
+  string message = 2;
+  ContentDefinitionObject result = 3;
+}
+
+message ContentDefinitionListResponse {
+  int32 statusCode = 1;
+  string message = 2;
+  ResultObject result = 3;
+}
+
+message ResultObject {
+  int32 count = 1;
+  repeated ContentDefinitionObject data = 2;
+}
+
+message ContentDefinitionObject {
+  string _id = 1;
+  repeated ContentDefinitionData fields = 2;
+  string type = 3;
+  string encryptKey = 4;
+  int32 isDelete = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message ContentDefinitionData {
+  string key = 1;
+  string dataType = 2;
+  string arrayOf = 3;
+  bool mandatory = 4;
+  bool searchable = 5;
+  bool indexable = 6;
+  bool reportable = 7;
+  bool filterable = 8;
+}
+
+

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package app;
+
+message ProcessInstancesResponse {
+    int32 grpcStatusCode = 1;
+    string message = 2;
+    Result result = 3;
+}
+message Result {
+    string _id = 1;
+}
+message startResponse {
+  int32 grpcStatusCode = 1;
+  string message = 2;
+}

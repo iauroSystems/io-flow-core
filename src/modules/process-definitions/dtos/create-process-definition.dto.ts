@@ -2,25 +2,15 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
-  IsNotEmptyObject,
-  IsInt,
-  IsBoolean,
-  ValidateNested,
-  IsDate,
-  IsDateString,
-  IsEmail,
-  IsObject,
   IsArray,
-  IsNumber,
   IsOptional,
-  IsIn,
   IsEnum,
-  ArrayUnique,
   Length,
-  Max
+  Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
+import { Prop } from '@nestjs/mongoose';
 
 class User {
   @ApiProperty()
@@ -31,68 +21,42 @@ class User {
   @IsOptional()
   emailId: string;
 }
-class Expression {
-  @ApiProperty()
-  lhs: any;
 
-  @ApiProperty()
-  op: string;
+class Config {
 
-  @ApiProperty()
-  rhs: any;
 }
 
 class Condition {
-  @ApiProperty()
+  @Prop()
   name: string;
 
-  @ApiProperty()
-  op: string;
+  @Prop()
+  expression: string;
 
-  @ApiProperty({ type: [Expression] })
-  expressions: Expression[]
+  @Prop({ type: {} })
+  variables: {};
 
-  @ApiProperty()
+  @Prop()
+  _valid: boolean;
+
+  @Prop()
   onTrueNextStage: string;
 
-  @ApiProperty()
-  onFalseNextStage: string
+  @Prop()
+  onFalseNextStage: string;
 }
 
-class PropertyType {
+class Connector {
   @ApiProperty({ type: String })
-  type: string;
+  @IsEnum(ConnectorTypes)
+  type: ConnectorTypes;
 
-  @ApiProperty({ type: String })
-  arrayOf: string;
+  @ApiProperty()
+  config: Config;
 
-  @IsArray()
-  @ApiProperty({ type: [] })
+  @ApiProperty()
   @IsOptional()
-  properties: any[];
-
-  @ApiProperty({ type: String })
-  default: string;
-
-  @ApiProperty({ type: Boolean })
-  required: boolean;
-
-  @ApiProperty()
-  enum: [any];
-
-  @ApiProperty()
-  displayType: string;
-}
-
-class Property {
-  @ApiProperty()
-  key: string;
-
-  @ApiProperty()
-  section: string;
-
-  @ApiProperty({ type: PropertyType })
-  value: PropertyType
+  connectorId: string;
 }
 
 class DefinitionCriteria {
@@ -133,18 +97,22 @@ class StageCriteria {
   @ApiProperty({ default: false })
   @IsOptional()
   showError: boolean;
-}
-class Config {
 
-}
-class Connector {
-  @ApiProperty({ type: String })
-  @IsEnum(ConnectorTypes)
-  type: ConnectorTypes;
+  @ApiProperty({ default: false })
+  @IsOptional()
+  retry: boolean;
 
-  @ApiProperty()
-  config: Config
+  @ApiProperty({ default: 2 })
+  @IsOptional()
+  @Max(5)
+  retries: number;
+
+  @ApiProperty({ default: 2000 })
+  @IsOptional()
+  @Max(5000)
+  retryIntervalMs: number;
 }
+
 
 class StageDefinition {
   @ApiProperty({ type: String, required: true })
@@ -177,15 +145,10 @@ class StageDefinition {
 
   @ApiProperty({ type: Boolean, default: false })
   @IsOptional()
-  disabled: boolean; // disable stage
+  isIterative: boolean; // isIterative stage
 
   @ApiProperty({ type: [String], default: [] })
   nextStages: string[];
-
-  @IsArray()
-  @ApiProperty({ type: [Property] })
-  @IsOptional()
-  properties: Property[];
 
   @IsArray()
   @ApiProperty({ type: [Condition] })
@@ -225,6 +188,13 @@ class StageDefinition {
   @IsOptional()
   priority?: string;
 
+  @ApiProperty({ type: String })
+  @IsOptional()
+  formId?: string;
+
+  @ApiProperty({ type: Config })
+  @IsOptional()
+  customParams?: Config;
 }
 
 
@@ -245,13 +215,6 @@ export class CreateProcessDefinitionDto {
   @ApiProperty({ type: Boolean, default: false })
   isParallel: boolean;
 
-  @IsArray()
-  @ApiProperty({ type: [Property] })
-  // @ValidateType(() => Property)
-  // @ValidateNested({ each: true })
-  @Type(() => Property)
-  properties: Property[];
-
   @ApiProperty({ type: DefinitionCriteria })
   @IsOptional()
   criteria?: DefinitionCriteria;
@@ -267,11 +230,12 @@ export class CreateProcessDefinitionDto {
   @IsOptional()
   assigneeConnector?: Connector; // this field is temporary
 
+  @IsOptional()
+  @ApiProperty({ type: String })
+  formId?: string;
+
   @ApiProperty({ type: User })
   @IsOptional()
   createdBy?: User; // this field is temporary
 }
 
-function ValidateType(arg0: () => typeof StageDefinition) {
-  throw new Error('Function not implemented.');
-}

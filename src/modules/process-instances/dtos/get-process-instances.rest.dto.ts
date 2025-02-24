@@ -36,5 +36,10 @@ export class GetProcessInstanceQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   readonly search: string;
+
+  @IsString()
+  @ApiPropertyOptional()
+  @IsOptional()
+  readonly projection: string;
 }
 

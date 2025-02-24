@@ -7,6 +7,9 @@ export type ProcessDefinitionDocument = ProcessDefinition & Document;
 
 class CompiledDefinition { }
 
+class Params extends Document {
+  [key: string]: any;
+}
 class User {
   @Prop()
   userId: string;
@@ -14,69 +17,42 @@ class User {
   @Prop()
   emailId: string;
 }
-class Expression {
-  @Prop()
-  lhs: SchemaTypes.Types.Mixed;
-
-  @Prop()
-  op: string;
-
-  @Prop()
-  rhs: SchemaTypes.Types.Mixed
-}
 
 class Condition {
   @Prop()
   name: string;
 
   @Prop()
-  op: string;
+  expression: string;
 
-  @Prop({ type: [Expression] })
-  expressions: Expression[]
+  @Prop({ type: {} })
+  variables: {};
+
+  @Prop()
+  _valid: boolean;
 
   @Prop()
   onTrueNextStage: string;
 
   @Prop()
-  onFalseNextStage: string
+  onFalseNextStage: string;
 }
 
-class PropertyType {
-  @Prop()
-  type: string;
+class Connector {
+  @Prop({ type: String, enum: ConnectorTypes })
+  type: ConnectorTypes;
 
   @Prop()
-  arrayOf: string;
+  config: SchemaTypes.Types.Mixed;
 
   @Prop()
-  default: string;
-
-  @Prop()
-  required: boolean;
-
-  @Prop()
-  enum: [any];
-
-  @Prop()
-  properties: [any];
-
-  @Prop()
-  displayType: string;
-}
-
-class Property {
-  @Prop()
-  key: string;
-
-  @Prop()
-  section: string;
-
-  @Prop({ type: PropertyType })
-  value: PropertyType;
+  connectorId: string;
 }
 
 class DefinitionCriteria extends Document {
+  @Prop({ type: Boolean, default: false })
+  showError: boolean;
+
   @Prop()
   allCompleted: boolean;
 
@@ -105,14 +81,15 @@ class StageCriteria extends Document {
 
   @Prop({ type: Boolean, default: false })
   showError: boolean;
-}
 
-class Connector {
-  @Prop({ type: String, enum: ConnectorTypes })
-  type: ConnectorTypes;
+  @Prop({ type: Boolean, default: false })
+  retry: boolean;
 
-  @Prop()
-  config: SchemaTypes.Types.Mixed
+  @Prop({ type: Number, default: 2 })
+  retries: number;
+
+  @Prop({ type: Number, default: 2000 })
+  retryIntervalMs: number;
 }
 
 @Schema()
@@ -139,26 +116,22 @@ class StageDefinitionSchema {
   auto: boolean; // execute stage automatically or trigger manually
 
   @Prop({ default: false })
-  disabled: boolean; // disable stage
+  isIterative: boolean; // isIterative stage
 
   @Prop({ default: true })
-  mandatory: boolean; // disable stage
+  mandatory: boolean;
 
   @Prop({ type: [String] })
   nextStages: string[];
 
-  @Prop([Property])
-  properties: Property[];
-
   @Prop([Condition])
   conditions: Condition[];
 
-  @Prop([String])
-  parallelStages: string[];
+  @Prop(Params)
+  parameters?: Params;
 
-
-  @Prop({ type: String })
-  assignee: string;
+  @Prop({ type: Connector })
+  assigneeConnector?: Connector; // this field is temporary
 
   @Prop({ type: [String] })
   watchers: string[];
@@ -166,9 +139,11 @@ class StageDefinitionSchema {
   @Prop({ type: StageCriteria })
   criteria?: StageCriteria;
 
-
   @Prop({ type: Connector, default: null })
   connector?: Connector;
+
+  @Prop({ type: String })
+  assignee: string;
 
   @Prop()
   processDefinitionId?: string;
@@ -182,6 +157,11 @@ class StageDefinitionSchema {
   @Prop()
   priority?: string;
 
+  @Prop()
+  formId?: string;
+
+  @Prop()
+  customParams?: SchemaTypes.Types.Mixed;
 }
 
 
@@ -206,14 +186,17 @@ export class ProcessDefinition extends Document {
   @Prop({ required: true })
   version: number;
 
-  @Prop([Property])
-  properties: Property[];
+  @Prop(Params)
+  parameters: Params;
 
   @Prop([StageDefinitionSchema])
   stages: StageDefinitionSchema[];
 
   @Prop({ type: Connector })
   assigneeConnector?: Connector; // this field is temporary
+
+  @Prop()
+  formId?: string;
 
   @Prop({ type: CompiledDefinition })
   _compiledDefinition?: CompiledDefinition;
@@ -223,7 +206,11 @@ export class ProcessDefinition extends Document {
 
   @Prop()
   updatedBy?: User;
+
+  @Prop({ default: false })
+  default: boolean;
 }
 
 export const ProcessDefinitionSchema = SchemaFactory.createForClass(ProcessDefinition);
 ProcessDefinitionSchema.index({ key: 1, version: 1 }, { unique: true });
+ProcessDefinitionSchema.index({ key: 1 });

@@ -20,6 +20,7 @@ export enum StageSubTypes {
   INCLUSIVE = 'inclusive',
   IF_ELSE = 'if-else',
   SWITCH_CASE = 'switch-case',
+  DEPENDENCY = 'dependency'
 }
 
 export enum StageTypes {
@@ -31,17 +32,27 @@ export enum StageTypes {
 
 export enum ConnectorTypes {
   REST = 'rest',
-  GRPC = 'grpc'
+  GRPC = 'grpc',
+  SOAP = 'soap',
+  KAFKA = 'kafka',
+  JAVASCRIPT = 'javascript',
+  PYTHON = 'python',
+  GRPAHQL = 'graphql',
+  MYSQL = 'mysql',
+  POSTGRES = 'postgresql'
 }
 
 export enum Webhooks {
   CREATE_INSTANCE = 'instance:create',
   UPDATE_INSTANCE = 'instance:update',
   DELETE_INSTANCE = 'instance:delete',
+  FAILURE_INSTANCE = 'instance:failure',
   CREATE_TASK = 'task:create',
   UPDATE_TASK = 'task:update',
-  DELETE_TASK = 'task:delete'
+  DELETE_TASK = 'task:delete',
+
 }
+
 
 export enum InputStatuses {
   COMPLETE = 'complete',

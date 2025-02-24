@@ -1,17 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query, Headers, UseInterceptors, UploadedFile, UploadedFiles, UseGuards } from "@nestjs/common";
-import { ApiBody, ApiConsumes, ApiHeader, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query, Headers, UseInterceptors, UploadedFile, UploadedFiles, UseGuards, Delete } from "@nestjs/common";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiHeader, ApiTags } from "@nestjs/swagger";
 import CustomResponse from 'src/common/providers/custom-response.service';
 import CustomError from "src/common/exceptions/custom-error";
 import { ProcessDefinition, ProcessDefinitionDocument } from "src/models/process-definitions/process-definitions.schema";
-import { CreateProcessDefinitionDto, UpdateProcessDefinitionDto, GetProcessDefinitionDto, UpdateDefinitionParams, StageDefinition, GetProcessDefinitionQueryDto } from "./dtos";
+import { CreateProcessDefinitionDto, UpdateProcessDefinitionDto, GetProcessDefinitionDto, UpdateDefinitionParams, StageDefinition, GetProcessDefinitionQueryDto, DefaultProcessDefinitionDto } from "./dtos";
 import { ProcessDefinitionService } from "./process-definitions.service";
 import { UpdateStageBody, UpdateStageParams } from "./dtos/update-stage.dto";
 import { CommonHeadersDto } from "src/shared/dtos";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { multerOptions } from "./providers/multer-options";
+import { DeleteProcessDefinitionDto } from "./dtos/delete-process-definition.dto";
+// import { AuthGuard } from '@gessa/authguard'
 
 @ApiTags('Business Process Definitions')
 @Controller('process-definitions')
+// @ApiBearerAuth()
+// @UseGuards(AuthGuard)
+// @ApiHeader({
+//   name: 'authorization',
+//   description: 'Bearer token',
+//   required: true,
+// })
+//  @UseGuards(new AuthGuard(`${process.env.RBAC_GRPC_URL}:${process.env.RBAC_GRPC_PORT}`, true))
 
 export class ProcessDefinitionController {
   constructor (private processDefinitionService: ProcessDefinitionService) { }
@@ -49,7 +59,7 @@ export class ProcessDefinitionController {
     return this.processDefinitionService.updateStage(headers, params, stage);
   }
 
-  @Post('upload-connector')
+  @Post('upload-connector-protoFile')
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
@@ -73,6 +83,30 @@ export class ProcessDefinitionController {
     return this.processDefinitionService.uploadProtoFile(headers, file);
   }
 
+  @Post('upload-connector-wsdlFile')
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        file: {
+          type: "string",
+          format: "binary",
+        },
+        serviceName: {
+          type: "string"
+        }
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', multerOptions))
+  uploadWSDLFile(
+    @Headers() headers: CommonHeadersDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.processDefinitionService.uploadWsdlFile(headers, file);
+  }
+
   @Post('upload-bpmn')
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -92,6 +126,17 @@ export class ProcessDefinitionController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.processDefinitionService.uploadBPMNFile(headers, file);
+  }
+
+  @Delete('/')
+  async deleteProcessDefinitions(@Headers() headers: CommonHeadersDto, @Query() queryDto: DeleteProcessDefinitionDto): Promise<CustomResponse | CustomError> {
+    return this.processDefinitionService.deleteProcessDefinitions(headers, queryDto);
+  }
+
+  @Patch(':processDefinitionId/defaults')
+  async markDefault(@Headers() headers: CommonHeadersDto, @Param('processDefinitionId') id: string, @Body() updateProcessDefinitionDto: DefaultProcessDefinitionDto):
+    Promise<CustomResponse | CustomError> {
+    return this.processDefinitionService.updateDefinition(headers, id, updateProcessDefinitionDto);
   }
 
 }

@@ -1,17 +1,30 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Headers, Param, Post, Query, UseGuards, } from '@nestjs/common';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import CustomResponse from 'src/common/providers/custom-response.service';
 import CustomError from 'src/common/exceptions/custom-error';
-import { CompleteTaskBody, CompleteTaskParams, CompleteTasksHeadersDto, GetTasksQueryDto, GetTasksHeadersDto, GetTasksParamsDto, ReAssignTaskBody } from './dtos';
+import { CompleteTaskBody, CompleteTaskParams, GetTasksQueryDto, ReAssignTaskBody } from './dtos';
 import { CommonHeadersDto } from 'src/shared/dtos';
 import { TasksService } from './tasks.service';
-import { Request } from 'express';
 import { GetProcessInstanceStatsQueryDto } from '../process-instances/dtos';
+// import { AuthGuard } from '@gessa/authguard';
+import CustomGrpcResponse from 'src/common/providers/custom-grpc-response.service';
 @ApiTags('Tasks')
 @Controller()
+// @ApiBearerAuth()
+// @UseGuards(AuthGuard)
+// @ApiHeader({
+//   name: 'authorization',
+//   description: 'Bearer token',
+//   required: true,
+// })
+
+// @UseGuards(new AuthGuard(`${process.env.RBAC_GRPC_URL}:${process.env.RBAC_GRPC_PORT}`, true))
 
 export class TasksController {
-  constructor (private tasksService: TasksService) { }
+
+  constructor (private tasksService: TasksService,
+
+  ) { }
 
   @Get('my-tasks')
   async findAllUserAssignedTasks(@Headers() headers: CommonHeadersDto, @Query() getUserTaskDto: GetTasksQueryDto): Promise<CustomResponse | CustomError> {
@@ -31,13 +44,13 @@ export class TasksController {
 
   @Post('tasks/:processInstanceId/complete')
   async completeTask(@Headers() headers: CommonHeadersDto, @Param() params: CompleteTaskParams, @Body() completeTaskDto: CompleteTaskBody):
-    Promise<CustomResponse | CustomError> {
+    Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     return this.tasksService.completeTask(headers, params, completeTaskDto);
   }
 
   @Post('tasks/:processInstanceId/reassign')
   async reassignTask(@Headers() headers: CommonHeadersDto, @Param() params: CompleteTaskParams, @Body() completeTaskDto: ReAssignTaskBody):
-    Promise<CustomResponse | CustomError> {
+    Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     return this.tasksService.reassignTask(headers, params, completeTaskDto);
   }
 
@@ -52,10 +65,11 @@ export class TasksController {
     return this.tasksService.getTasksStats(headers, query, true);
   }
 
-
   @ApiExcludeEndpoint()
   @Get('timer')
-  async updateTimer(): Promise<CustomResponse | CustomError> {
-    return this.tasksService.updateTimer();
+  async updateTimer(@Headers() headers: CommonHeadersDto): Promise<CustomResponse | CustomError> {
+
+    return this.tasksService.updateTimer(headers);
   }
+
 }

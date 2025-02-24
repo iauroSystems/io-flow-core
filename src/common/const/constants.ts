@@ -26,6 +26,7 @@ export class Constants {
     PARALLEL: 'parallel',
     INCLUSIVE: 'inclusive',
     EVENT_BASED: 'event-based',
+    DEPENDENCY: 'dependency'
   }
   static STAGE_STATUSES = {
     WAITING: 'waiting',
@@ -37,13 +38,23 @@ export class Constants {
     CANCELLED: 'cancelled',
     RUNNING: 'running'
   }
+  static DEFAULT_QUERY_LIMIT = 100;
+  static DB_PARSER_CONFIG = {
+    mysql: {
+      database: 'MySQL'
+    },
+    postgres: {
+      database: 'Postgresql'
+    }
+  }
 }
 
 export class Paths {
   // static WORKFLOW_PROTO_DIR = 'src/shared/clients';
   static BPMN_XML = 'src/shared/bpmn';
   static PUBLIC = 'src/shared/public'
-  static WORKFLOW_PROTO_DIR = 'src/proto/'
+  static WORKFLOW_PROTO_DIR = 'dist/src/proto/'
+  static WORKFLOW_SOAP_DIR = 'dist/src/shared/public/'
 }
 
 export class LogEntities {

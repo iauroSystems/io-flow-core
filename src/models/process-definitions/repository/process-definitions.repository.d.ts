@@ -6,5 +6,6 @@ import { ProcessDefinitionDocument } from 'src/models/process-definitions/proces
 @Injectable()
 export interface ProcessDefinitionRepository extends BaseRepositry<ProcessDefinitionDocument> {
   create(setting: CreateProcessDefinitionDto): Promise<ProcessDefinitionDocument>;
-  update(condition: any, user: UpdateProcessDefinitionDto): Promise<ProcessDefinitionDocument>;
+  update(condition: any, data: UpdateProcessDefinitionDto): Promise<ProcessDefinitionDocument>;
+  updateMany(condition: any, data: UpdateProcessDefinitionDto): Promise<any>;
 }

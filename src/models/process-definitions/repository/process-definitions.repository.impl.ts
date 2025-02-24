@@ -28,4 +28,13 @@ export class ProcessDefinitionRepositoryImpl extends BaseRepositoryImpl<ProcessD
     return this.ProcessDefinitionModel.findOneAndUpdate(condition, object, { new: true }).exec();
   }
 
+  deleteBulk(condition: any): Promise<any> {
+
+    return this.ProcessDefinitionModel.deleteMany(condition).exec();
+  }
+
+  updateMany(condition: any, object: UpdateProcessDefinitionDto): Promise<any> {
+    return this.ProcessDefinitionModel.updateMany(condition, object, { new: true }).exec();
+  }
+
 }

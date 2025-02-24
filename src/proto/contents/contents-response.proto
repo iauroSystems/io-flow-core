@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package app;
+
+message ContentsResponse {
+  int32 statusCode = 1;
+  string message = 2;
+  ContentsObject result = 3;
+}
+
+message ContentsObject {
+  string responseString = 1;
+}

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package app;
+
+message FiltersListResponse {
+  int32 statusCode = 1;
+  string message = 2;
+  repeated FiltersObject result = 3;
+}
+
+
+message ValueObject {
+  string en = 1;
+  string jp = 2;
+}
+
+message FiltersObject {
+  string contentType = 1;
+  string filterOn = 2;
+  ValueObject value = 3;
+  ValueObject key = 4;
+  int32 count = 5;
+}
+
+message FiltersResponse {
+  int32 statusCode = 1;
+  string message = 2;
+  FiltersObject result = 3;
+}
+

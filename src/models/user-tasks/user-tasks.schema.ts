@@ -3,39 +3,7 @@ import { Document, Schema as SchemaTypes } from 'mongoose';
 
 export type UserTasksDocument = UserTasks & Document;
 
-class PropertyType {
-  @Prop()
-  type: string;
-
-  @Prop()
-  arrayOf: string;
-
-  @Prop()
-  default: string;
-
-  @Prop()
-  required: boolean;
-
-  @Prop()
-  enum: [any];
-
-  @Prop()
-  properties: [any];
-
-  @Prop()
-  displayType: string;
-}
-
-class Property {
-  @Prop()
-  key: string;
-
-  @Prop()
-  section: string;
-
-  @Prop({ type: PropertyType })
-  value: PropertyType;
-}
+class Custom { };
 
 class User {
   @Prop()
@@ -68,6 +36,9 @@ export class UserTasks extends Document {
   taskId: string;
 
   @Prop()
+  formId: string;
+
+  @Prop()
   key: string;
 
   @Prop({ required: true })
@@ -81,9 +52,6 @@ export class UserTasks extends Document {
 
   @Prop({ type: [String] })
   watchers: string[];
-
-  @Prop([Property])
-  properties: Property[];
 
   @Prop({ default: -1 })
   expStartDate: number;
@@ -106,6 +74,9 @@ export class UserTasks extends Document {
   @Prop({ required: true, default: 'todo' })
   status: string;
 
+  @Prop()
+  customParams?: SchemaTypes.Types.Mixed;
+
   @Prop(User)
   createdBy: User;
 
@@ -119,3 +90,10 @@ export class UserTasks extends Document {
 
 export const UserTasksSchema = SchemaFactory.createForClass(UserTasks);
 UserTasksSchema.index({ processInstanceId: 1, taskId: 1, userId: 1 }, { unique: true });
+UserTasksSchema.index({ processDefinitionId: 1 });
+UserTasksSchema.index({ processDefinitionKey: 1 });
+UserTasksSchema.index({ processInstanceId: 1 })
+UserTasksSchema.index({ rootProcessInstanceId: 1 });
+UserTasksSchema.index({ assignee: 1 });
+UserTasksSchema.index({ key: 1 });
+UserTasksSchema.index({ status: 1 });

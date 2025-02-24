@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package audits;
+
+service AuditServices {
+    rpc Create(CreateDataFieldRequest) returns (DataFieldResponse) {};
+    rpc FindAll(FetchAllRequest) returns (DataFieldListResponse) {};
+}
+
+message DataFieldListResponse {
+    int32 statusCode = 1;
+    string message = 2;
+    ResultObject result = 3;
+}
+  
+message ResultObject {
+    int32 count = 1;
+    repeated DataObject data = 2;
+}
+  
+message DataObject {
+    string _id = 1;
+   string type  = 2;
+    string subType  = 3;
+    string entity = 4;
+    string entityId = 5;
+    string oldValue = 6;
+    string newValue = 7;
+    createdBy createdBy = 8;
+    string operation = 9;
+    string createdAt = 10;
+    string updatedAt = 11; 
+}
+    
+message audit {
+      string _id = 1;
+}
+
+
+message DataFieldResponse {
+    int32 statusCode = 1;
+    string message = 2;
+    DataObject result = 3;
+}
+
+message CreateDataFieldRequest {
+    string type  = 1;
+    string subType  = 2;
+    string entity = 3;
+    string entityId = 4;
+    string oldValue = 5;
+    string newValue = 6;
+    createdBy createdBy = 7;
+    string operation = 8;
+}
+
+
+
+message action {
+    enum ActionDetails {
+    CREATE = 1;
+    UPDATE = 2;
+    DELETE = 3;
+    }   
+}
+
+message severity{
+    enum SeverityDetails {
+    ALERT = 1;
+    ERROR = 2;
+    WARN = 3;
+    NOTICE = 4;
+    INFO = 5;
+    DEBUG = 6;
+    }
+}
+
+message createdBy {
+    string userId = 1;
+    string emailId = 2;
+}
+
+
+message FetchAllRequest {
+    int32 size = 1;
+    int32 page = 2;
+    string search = 3;
+    string sort = 4;
+    string filters = 5;
+    
+}
