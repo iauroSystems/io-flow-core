@@ -1,14 +1,21 @@
-// require('dotenv').config({ path: `envs/.env.${process.env.NODE_ENV}` })
 
-import { MiddlewareConsumer, Module } from '@nestjs/common'
+import { HttpStatus, MiddlewareConsumer, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/exceptions';
-import { HttpRequestHeadersMiddleware } from './common/middlewares';
+import { AppLoggerMiddleware, HttpRequestHeadersMiddleware } from './common/middlewares';
 import { ResponseInterceptor } from './common/interceptors';
-import { HttpModule } from '@nestjs/axios';
-import { ProcessDefinitionsModule, ProcessInstancesModule, TasksModule } from './modules';
-import { HttpConnector } from 'src/shared/connectors';
+import { HttpModule, HttpService } from '@nestjs/axios';
+import { ValidationsModule, ProcessDefinitionsModule, ProcessInstancesModule, TasksModule, WebhooksModule } from './modules';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DataflowConversionModule } from './modules/dataflow-conversion/dataflow-conversion.module';
+import { makeCounterProvider, makeGaugeProvider, makeHistogramProvider, makeSummaryProvider, PrometheusModule } from "@willsoto/nestjs-prometheus";
+import { HttpConnector, GrpcConnector } from 'src/shared/connectors';
+import { MetricsMiddleware } from './common/middlewares/http-status-code.middleware';
+import { ConnectorModule } from './modules/connectors/connectors.module';
+// import { GlobalScheduleProvider } from './common/providers/global-schedule.provider';
+import { ExecutorModule } from './modules/executor/executor.module';
+import { CustomMessages } from './common/const/custom-messages';
 import { MongooseModule } from '@nestjs/mongoose';
 
 // example run command
@@ -29,22 +36,49 @@ const MONGO_PROTOCOL = process.env.MONGO_PROTOCOL, MONGO_HOST = process.env.MONG
     }),
     HttpModule,
     MongooseModule.forRoot(`mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DBNAME}`),
+    ScheduleModule.forRoot(),
     ProcessDefinitionsModule,
     ProcessInstancesModule,
     TasksModule,
+    WebhooksModule,
+    DataflowConversionModule,
+    PrometheusModule.register(),
+    ExecutorModule,
+    ConnectorModule,
+    ValidationsModule
   ],
   controllers: [],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
+    makeCounterProvider({
+      name: "metric_Counter",
+      help: "metric_help",
+    }),
+    makeGaugeProvider({
+      name: "metric_gauge",
+      help: "metric_help",
+    }),
+    makeHistogramProvider({
+      name: "metric_histogram",
+      help: "metric_help",
+    }),
+    makeSummaryProvider({
+      name: "metric_summary",
+      help: "metric_help",
+    }),
     HttpConnector,
-    HttpRequestHeadersMiddleware
+    HttpRequestHeadersMiddleware,
+    // GlobalScheduleProvider
   ],
+  // exports: [GlobalScheduleProvider]
 })
 export class AppModule {
   // Global Middleware, Inbound logging
   public configure(consumer: MiddlewareConsumer): void {
     consumer.apply(HttpRequestHeadersMiddleware).forRoutes('*');
     // consumer.apply(AppLoggerMiddleware).forRoutes('*');
+    consumer.apply(MetricsMiddleware).forRoutes('*');
   }
 }
+

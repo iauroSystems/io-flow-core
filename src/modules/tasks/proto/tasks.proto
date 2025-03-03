@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package app;
+
+service TasksGrpcService {
+    rpc CompleteTask (CompleteTaskRequest) returns (TaskResponse) {}
+    rpc ReassignTask (reassignTaskRequest) returns (TaskResponse) {}
+}
+
+message CompleteTaskRequest {
+    ParamsData params = 1;
+    CompleteTaskDto completeTaskDto = 2;
+}
+message CompleteTaskDto {
+    string taskId = 1;
+    string taskKey = 2;
+    string status = 3;
+    Connector connector = 5;
+    Parameters parameters = 6;
+}
+message Parameters {
+    map<string, string> parameters = 1;
+}
+message Connector {
+    string type = 1;
+    map<string, string> config = 2;
+}
+
+message reassignTaskRequest {
+    ParamsData params = 1;
+    ReassignTaskDto completeTaskDto = 2;
+}
+message ParamsData {
+    string processInstanceId = 1;
+}
+message ReassignTaskDto {
+    string taskId = 1;
+    string taskKey = 2;
+    string assignee = 3;
+    repeated string watchers = 4;
+    Param parameters = 5;
+}
+message Param {
+  map<string, string> params = 1;
+}
+
+message TaskResponse {
+    int32 statusCode = 1;
+    string message = 2;
+}

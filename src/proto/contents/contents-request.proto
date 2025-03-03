@@ -1,0 +1,12 @@
+ syntax = "proto3";
+
+ package app;
+ 
+ message CreateContentsRequest {
+    string requestString = 1;
+}
+
+message UpdateContentsRequest {
+    string id = 1;
+    CreateContentsRequest body = 2;
+}

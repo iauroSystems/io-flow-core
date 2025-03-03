@@ -1,0 +1,53 @@
+/*
+ * Created on Tuesday, January 4th 2022
+ * 
+ * Created by tejraj.jadhav@iauro.com
+ * Copyright (c) 2022 Copyrights 2021 - SBI Holdings
+ * 
+ */
+
+syntax = "proto3";
+
+package app;
+
+
+message FetchAllRequest {
+    int32 size = 1;
+    int32 page = 2;
+    string search = 3;
+    string sort = 4;
+    string filters = 5;
+}
+
+
+message Id {
+    string id = 1;
+  }
+  
+
+message ContentsResponse {
+  int32 statusCode = 1;
+  string message = 2;
+  ContentsObject result = 3;
+}
+
+message ContentsObject {
+  string responseString = 1;
+}
+
+message CreateContentsRequest {
+    string requestString = 1;
+}
+
+message UpdateContentsRequest {
+    string id = 1;
+    CreateContentsRequest body = 2;
+}
+
+service ContentsController {
+  rpc FindAllData (FetchAllRequest) returns (ContentsResponse) {};
+  rpc FindDataById (Id) returns (ContentsResponse) {};
+  rpc CreateData (CreateContentsRequest) returns (ContentsResponse) {};
+  rpc UpdateData (UpdateContentsRequest) returns (ContentsResponse) {};
+  rpc DeleteData (Id) returns (ContentsResponse) {};
+}

@@ -1,24 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
-  IsNotEmpty,
-  IsInt,
-  IsBoolean,
-  ValidateNested,
-  IsDate,
-  IsDateString,
-  IsEmail,
-  IsObject,
   IsArray,
-  IsNumber,
   IsOptional,
-  IsIn,
   IsEnum,
   Length,
+  IsBoolean,
 } from 'class-validator'
 
 import { Type } from 'class-transformer';
 import { StageTypes, StageSubTypes, ConnectorTypes } from 'src/common/const/enums';
+import { Prop } from '@nestjs/mongoose';
 
 class User {
   @ApiProperty()
@@ -28,6 +20,7 @@ class User {
   @ApiProperty()
   @IsOptional()
   emailId: string;
+
 }
 class PropertyType {
   @ApiProperty({ type: String })
@@ -83,14 +76,20 @@ class DefinitionCriteria {
 class Config {
 
 }
+
 class Connector {
   @ApiProperty({ type: String })
   @IsEnum(ConnectorTypes)
   type: ConnectorTypes;
 
   @ApiProperty()
-  config: Config
+  config: Config;
+
+  @ApiProperty()
+  @IsOptional()
+  connectorId: string;
 }
+
 
 class Expression {
   @ApiProperty()
@@ -104,20 +103,23 @@ class Expression {
 }
 
 class Condition {
-  @ApiProperty()
+  @Prop()
   name: string;
 
-  @ApiProperty()
-  op: string;
+  @Prop()
+  expression: string;
 
-  @ApiProperty({ type: [Expression] })
-  expressions: Expression[]
+  @Prop({ type: {} })
+  variables: {};
 
-  @ApiProperty()
+  @Prop()
+  _valid: boolean;
+
+  @Prop()
   onTrueNextStage: string;
 
-  @ApiProperty()
-  onFalseNextStage: string
+  @Prop()
+  onFalseNextStage: string;
 }
 
 
@@ -142,7 +144,7 @@ export class StageDefinition {
   @IsString()
   type: StageTypes;
 
-  @ApiProperty({ type: String, default: 'manual-task' })
+  @ApiProperty({ type: String, default: 'system-task' })
   @IsEnum(StageSubTypes)
   @IsString()
   subType: StageSubTypes;
@@ -157,11 +159,6 @@ export class StageDefinition {
 
   @ApiProperty({ type: [String], default: [] })
   nextStages: string[];
-
-  @IsArray()
-  @ApiProperty({ type: [Property] })
-  @IsOptional()
-  properties: Property[];
 
   @IsArray()
   @ApiProperty({ type: [Condition] })
@@ -182,7 +179,7 @@ export class StageDefinition {
 
   @ApiProperty({ type: Connector })
   @IsOptional()
-  connector: Connector;
+  connector?: Connector;
 
   @ApiProperty({ type: String })
   @IsOptional()
@@ -191,6 +188,11 @@ export class StageDefinition {
 
   @ApiProperty({ type: String })
   @IsOptional()
+  formId?: string;
+
+  @ApiProperty()
+  customParams: any
+
   @Length(1, 24)
   processDefinitionKey?: string;
 }
@@ -200,11 +202,6 @@ export class UpdateProcessDefinitionDto {
   @IsOptional()
   @ApiProperty()
   description?: string;
-
-  @IsArray()
-  @ApiProperty({ type: [Property] })
-  @IsOptional()
-  properties?: Property[];
 
   @ApiProperty({ type: DefinitionCriteria })
   @IsOptional()
@@ -223,10 +220,18 @@ export class UpdateProcessDefinitionDto {
 
   _compiledDefinition?: any;
 
+  @IsOptional()
+  @ApiProperty({ type: String })
+  formId?: string;
+
+
   @ApiProperty({ type: User })
   @IsOptional()
   createdBy?: User; // this field is temporary
 
+  @IsOptional()
+  @ApiProperty({ type: Boolean, default: false })
+  default?: boolean;
 }
 
 export class UpdateDefinitionParams {
@@ -237,4 +242,10 @@ export class UpdateDefinitionParams {
   @ApiPropertyOptional()
   @IsString()
   stageId: string;
+}
+
+export class DefaultProcessDefinitionDto {
+  @ApiProperty({ type: Boolean, default: false })
+  @IsBoolean()
+  default: boolean;
 }

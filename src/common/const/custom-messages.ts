@@ -49,6 +49,47 @@ export class CustomMessages {
 
   static INVALID_JSON = 'JSON is invalid';
 
+  static WEBHOOK_CREATED = 'webhook created successfully';
+
+  static WEBHOOK_UPDATED = 'webhook updated successfully';
+
+  static WEBHOOK_NOT_FOUND = 'webhook not found';
+
+  static WEBHOOK_EXISTS = 'webhook already exists';
+
+  static WEBHOOK_NOT_EXISTS = 'webhook does not exists';
+
   static FLOW_NOT_ON_HOLD = 'Flow is not on-hold';
 
+  static CAN_NOT_CREATE_SOAP_CLIENT = 'can not create soap client';
+
+  static CAN_NOT_CALL_SOAP_METHOD = 'can not call soap method';
+
+  static VALIDATION_CREATED = 'validation created';
+
+  static VALIDATION_EXISTS = 'validation exists';
+
+  static VALIDATION_NOT_CREATED = 'validation not created';
+
+  static VALIDATION_NOT_FOUND = 'validation not found';
+
+  static VALIDATION_UPDATE_ERROR = 'validation not updated successfully';
+
+  static VALIDATION_DELETE_ERROR = 'validation not deleted successfully';
+
+  static CONNECTOR_NOT_CREATED = 'connector not created';
+
+  static CONNECTOR_CREATED = 'connector created successfully';
+
+  static CONNECTOR_NOT_FOUND = 'connector not found';
+
+  static CONNECTOR_UPDATED = 'connector updated successfully';
+
+  static INVALID_TENANT_ID = 'Invalid tenant id. It should not contain /\\."$*<>:|? characters and must be between 1 and 64 characters in length.';
+
+  static START_END_VERSION_ERROR = 'StartVersion must be less than or equal to endVersion'
+
+  static VERSION_ERROR = 'Versions should be greater than 0'
+
 }
+

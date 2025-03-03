@@ -1,18 +1,20 @@
-import { HttpStatus, Injectable, Logger, Scope } from '@nestjs/common';
-import { ProcessDefinition, ProcessDefinitionDocument } from 'src/models/process-definitions/process-definitions.schema';
-import { CreateProcessDefinitionDto, UpdateProcessDefinitionDto, GetProcessDefinitionDto, UpdateDefinitionParams, StageDefinition, GetProcessDefinitionQueryDto } from './dtos';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { CreateProcessDefinitionDto, UpdateProcessDefinitionDto, GetProcessDefinitionDto, GetProcessDefinitionQueryDto, DefaultProcessDefinitionDto } from './dtos';
 import CustomResponse from 'src/common/providers/custom-response.service';
 import CustomError from 'src/common/exceptions/custom-error';
 import { CustomMessages } from 'src/common/const/custom-messages';
 import { ProcessDefinitionRepositoryImpl } from 'src/models/process-definitions/repository/process-definitions.repository.impl';
 import { UpdateStageBody, UpdateStageParams } from './dtos/update-stage.dto';
-import { Constants, LogEntities, Operations, Paths } from 'src/common/const/constants';
+import { Audits } from 'src/shared/clients/audit-service/audit-service.provider';
+import { LogEntities, Operations, Paths } from 'src/common/const/constants';
 import { Mappings } from 'src/common/const/BPMN-mappings';
 import { CommonHeadersDto } from 'src/shared/dtos';
 import { Compiler } from '../process-instances/providers';
 import { StagesSchema } from './joi-validations/create-process-definition.joi';
 import * as _ from 'lodash';
 import sanitize from 'sanitize-filename';
+import { DeleteProcessDefinitionDto } from './dtos/delete-process-definition.dto';
+import { endpointToString } from '@grpc/grpc-js/build/src/subchannel-address';
 
 const convert = require('xml-js');
 
@@ -22,6 +24,7 @@ export class ProcessDefinitionService {
 
   constructor (
     private processDefinitionRepositoryImpl: ProcessDefinitionRepositoryImpl,
+    private audits: Audits,
     private compiler: Compiler,
   ) { }
 
@@ -31,7 +34,6 @@ export class ProcessDefinitionService {
    * @param arr {object} - target array, e.g. [{key: "k1"}, {key: "k2"}]
    * @returns {boolean} e.g. true/false
    */
-
   private checkDuplicateKey(key, arr) {
     let map = {};
     let isDup = false;
@@ -51,27 +53,27 @@ export class ProcessDefinitionService {
    * @param definition {object} - Process definiton object, e.g. {name: "", key: "",properties: [], stages:[], ...}
    * @returns {undefined/object} - Error array, e.g. [{taskKey: "", processDefinitionKey: "", parameterKey: "", error: ""}]
    */
-  private async verifyCompoundTaskParams(definition) {
-    const compoundTasks = definition.stages.filter(stage => stage.subType === Constants.STAGE_SUB_TYPES.COMPOUND_TASK && (stage.processDefinitionId || stage.processDefinitionKey));
-    const childProcessDefinitionKeys = compoundTasks.map(stage => stage.processDefinitionKey);
-    const compObject = compoundTasks.reduce(
-      (obj, item) => Object.assign(obj, { [item.processDefinitionKey]: { key: item.key, properties: item.properties } }), {})
-    const childDef = await this.processDefinitionRepositoryImpl.find({ key: childProcessDefinitionKeys, properties: { $exists: true, $ne: [] } }, { key: 1, properties: 1 });
-    const errors = [];
-    childDef.forEach(def => {
-      const propObj = compObject[def.key].properties.reduce(
-        (obj, item) => Object.assign(obj, { [item.key]: item.value?.default }), {});
-      def.properties.forEach(p => {
-        if ((p.value.required === true || p.value.required as any === 'true') && !propObj[p.key]) {
-          errors.push({ taskKey: compObject[def.key].key, processDefinitionKey: def.key, parameterKey: p.key, error: 'default value must be set for the input parameters which are required for child workflow' })
-        }
-      });
+  // private async verifyCompoundTaskParams(definition) {
+  //   const compoundTasks = definition.stages.filter(stage => stage.subType === Constants.STAGE_SUB_TYPES.COMPOUND_TASK && (stage.processDefinitionId || stage.processDefinitionKey));
+  //   const childProcessDefinitionKeys = compoundTasks.map(stage => stage.processDefinitionKey);
+  //   const compObject = compoundTasks.reduce(
+  //     (obj, item) => Object.assign(obj, { [item.processDefinitionKey]: { key: item.key, properties: item.properties } }), {})
+  //   const childDef = await this.processDefinitionRepositoryImpl.find({ key: childProcessDefinitionKeys, properties: { $exists: true, $ne: [] } }, { key: 1, properties: 1 });
+  //   const errors = [];
+  //   childDef.forEach(def => {
+  //     const propObj = compObject[def.key].properties.reduce(
+  //       (obj, item) => Object.assign(obj, { [item.key]: item.value?.default }), {});
+  //     def.properties.forEach(p => {
+  //       if ((p.value.required === true || p.value.required as any === 'true') && !propObj[p.key]) {
+  //         errors.push({ taskKey: compObject[def.key].key, processDefinitionKey: def.key, parameterKey: p.key, error: 'default value must be set for the input parameters which are required for child workflow' })
+  //       }
+  //     });
 
-    });
-    if (errors[0]) {
-      return errors;
-    }
-  }
+  //   });
+  //   if (errors[0]) {
+  //     return errors;
+  //   }
+  // }
 
   /**
    * Validate the individual stage schema
@@ -90,6 +92,7 @@ export class ProcessDefinitionService {
         return `Error for key [${stage?.key}] and subType [${stageSubType}] : [${validationResult?.error?.details?.[0]?.message}]`;
       }
     }
+    return;
   }
 
   /**
@@ -110,23 +113,25 @@ export class ProcessDefinitionService {
       throw new CustomError(HttpStatus.BAD_REQUEST, stagesValidationResult);
     }
 
-    const compoundTaskValidate = await this.verifyCompoundTaskParams(createProcessDefinitionDto);
-    if (compoundTaskValidate) {
-      throw new CustomError(HttpStatus.BAD_REQUEST, 'Error in compound tasks [properties]', compoundTaskValidate);
+    // const compoundTaskValidate = await this.verifyCompoundTaskParams(createProcessDefinitionDto);
+    // if (compoundTaskValidate) {
+    //   throw new CustomError(HttpStatus.BAD_REQUEST, 'Error in compound tasks [properties]', compoundTaskValidate);
 
-    }
+    // }
 
     let workflow = await this.processDefinitionRepositoryImpl.findOne({ key: createProcessDefinitionDto.key }, {}, { version: -1 });
     if (workflow) {
       createProcessDefinitionDto['version'] = workflow.version + 1;
       const updatedProcessDefinition = { ...createProcessDefinitionDto, ...workflow };
       const data = await this.processDefinitionRepositoryImpl.create(updatedProcessDefinition);
+      this.audits.pushAuditLogs(headers, LogEntities.PROCESS_DEF, data, Operations.CREATE);
       this.updateCompiledDefinition(data);
       return new CustomResponse(HttpStatus.OK, CustomMessages.WORKFLOW_CREATED_NEW_VERSION, data);
     }
 
     createProcessDefinitionDto['version'] = 1;
     const data = await this.processDefinitionRepositoryImpl.create(createProcessDefinitionDto);
+    this.audits.pushAuditLogs(headers, LogEntities.PROCESS_DEF, data, Operations.CREATE);
     this.updateCompiledDefinition(data);
     return new CustomResponse(HttpStatus.CREATED, CustomMessages.WORKFLOW_CREATED, data);
   }
@@ -136,7 +141,7 @@ export class ProcessDefinitionService {
    * @param processDefinition {object} - Process definiton object, e.g. {name: "", key: "",properties: [], stages:[], ...}
    */
   private async updateCompiledDefinition(processDefinition) {
-    const compiledWorkflow = this.compiler.compileV2(processDefinition);
+    const compiledWorkflow = await this.compiler.compileV2(processDefinition);
     await this.processDefinitionRepositoryImpl.update({ _id: processDefinition._id }, { _compiledDefinition: compiledWorkflow });
   }
 
@@ -148,7 +153,7 @@ export class ProcessDefinitionService {
    * @returns {Promise} - CustomError or CustomResponse, e.g. {statusCode: 400, message: "", error: {}}/{statusCode: 200, message: "", result: {}}
    */
   async update(headers: CommonHeadersDto, id: string, updateProcessDefinitionDto: UpdateProcessDefinitionDto): Promise<CustomResponse | CustomError> {
-    const workflow = await this.processDefinitionRepositoryImpl.findOne({ id: id });
+    const workflow = await this.processDefinitionRepositoryImpl.findOne({ _id: id });
     if (!workflow) {
       throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.WORKFLOW_NOT_FOUND);
     }
@@ -158,6 +163,7 @@ export class ProcessDefinitionService {
     }
     // updateProcessDefinitionDto['version'] = workflow.version + 1;
     const data = await this.processDefinitionRepositoryImpl.update({ _id: id }, updateProcessDefinitionDto);
+    this.audits.pushAuditLogs(headers, LogEntities.PROCESS_DEF, data, Operations.UPDATE);
     this.updateCompiledDefinition(data);
     return new CustomResponse(HttpStatus.OK, CustomMessages.WORKFLOW_UPDATED, data);
   }
@@ -179,15 +185,15 @@ export class ProcessDefinitionService {
       ...(stage.description && { 'stages.$.description': stage.description }),
       ...(stage.processDefinitionId && { 'stages.$.processDefinitionId': stage.processDefinitionId }),
       ...(stage.conditions?.length && { 'stages.$.conditions': stage.conditions }),
-      ...(stage.properties?.length && { 'stages.$.properties': stage.properties }),
       ...(stage.assignee?.length && { 'stages.$.assignee': stage.assignee }),
       ...(stage.criteria && { 'stages.$.criteria': stage.criteria }),
-      ...(stage.connector && { 'stages.$.connector': stage.connector }),
+      ...(stage.connector && { 'stages.$.connectorId': stage.connector }),
       ...(stage.nextStages && { 'stages.$.nextStages': stage.nextStages }),
       ...(stage.type && { 'stages.$.type': stage.type }),
       ...(stage.subType && { 'stages.$.subType': stage.subType })
     };
     const data = await this.processDefinitionRepositoryImpl.updateStage(condition, setValues);
+    this.audits.pushAuditLogs(headers, LogEntities.PROCESS_DEF, data, Operations.UPDATE);
     return new CustomResponse(HttpStatus.OK, CustomMessages.WORKFLOW_UPDATED, data);
   }
 
@@ -215,7 +221,7 @@ export class ProcessDefinitionService {
           if (search.hasOwnProperty(key)) {
             let obj = {};
             const safeKey = _.escapeRegExp(search[key]);
-            obj[key] = { $regex: new RegExp(safeKey, 'i') }
+            obj[key] = { $regex: new RegExp(safeKey, 'i') };
             orCond.$or.push(obj);
           }
         }
@@ -281,18 +287,29 @@ export class ProcessDefinitionService {
   }
 
   /**
+ * Upload a file
+ * @param headers {object} - Defined request headers 
+ * @param file {object} - file object
+ * @returns {Promise} - CustomResponse, e.g. {statusCode: 200, message: "", reprotoPathsult: {}}
+ */
+  async uploadWsdlFile(headers: CommonHeadersDto, file) {
+    return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, { wsdlPath: `/src/shared/public/${file.filename}` });
+  }
+
+  /**
    * Upload a file
    * @param headers {object} - Defined request headers 
    * @param file {object} - file object
    * @returns {Promise} - CustomError or CustomResponse, e.g. {statusCode: 400, message: "", error: {}}/{statusCode: 200, message: "", result: {}}
    */
   async uploadBPMNFile(headers: CommonHeadersDto, file) {
-    const filename = sanitize(file.originalname);
-    const xml = require('fs').readFileSync(`${Paths.BPMN_XML}/${filename}`, 'utf8');
+    const xml = require('fs').readFileSync(file.path, 'utf8');
     const options = { ignoreComment: true, alwaysChildren: true };
     const rawJson = convert.xml2js(xml, options); // or convert.xml2json(xml, options)
-    const businessFlowJson = this.bpmnJsonToNativeJson(rawJson);
-    return this.create(headers, businessFlowJson);
+
+    // const businessFlowJson = this.bpmnJsonToNativeJson(rawJson);
+    return this.bpmnToDataFlow(rawJson);
+    // return this.create(headers, businessFlowJson);
   }
 
   /**
@@ -308,36 +325,184 @@ export class ProcessDefinitionService {
       description: bpmnProcessJson.attributes.description || '',
       key: bpmnProcessJson.attributes.id,
       isParallel: false,
-      stages: [],
-      properties: []
-    }
+      stages: []
+    };
     targetProcessJSON.stages = bpmnProcessJson.elements.map(ele => {
       if (Mappings.StageMappings[ele.name]) {
         let stage = { ...Mappings.StageMappings[ele.name] };
         stage.key = ele?.attributes.id;
         stage.name = ele?.attributes.name || ele?.attributes.id;
         stage.description = ele.attributes.description || ele.name;
-        const nextStages = bpmnProcessJson.elements.filter(linkObj => linkObj.name === 'bpmn:sequenceFlow' && linkObj.attributes.sourceRef === ele.attributes.id).map(obj => obj.attributes.targetRef);
-        stage.properties = ele.elements.find(obj => obj.name === 'bpmn:extensionElements')?.elements.find(obj => obj.name === 'zeebe:ioMapping')?.elements.map(obj => {
-          if (obj.name === 'zeebe:input') {
-            return {
-              key: obj.attributes.target,
-              value: {
-                type: 'string',
-                default: ''
-              }
-            }
-          }
-        }).filter(obj => obj);
+        const nextStages = bpmnProcessJson.elements.filter(linkObj => linkObj.name === 'bpmn2:sequenceFlow' && linkObj.attributes.sourceRef === ele.attributes.id).map(obj => obj.attributes.targetRef);
+        // stage.properties = ele.elements.find(obj => obj.name === 'bpmn2:extensionElements')?.elements.find(obj => obj.name === 'camunda:connector')?.elements.find(obj => obj.name === 'camunda:inputOutput')?.elements.map(obj => {
+
+        //   return {
+        //     key: obj.attributes.name,
+        //     value: {
+        //       type: 'string',
+        //       default: ''
+        //     }
+        //   };
+
+        // }).filter(obj => obj);
 
         stage.nextStages = nextStages;
-        if (ele.name === 'bpmn:callActivity') {
-          stage.processDefinitionKey = ele.elements.find(extEle => extEle.name = 'bpmn:extensionElements')?.elements.find(obj => obj.name === 'zeebe:calledElement')?.attributes?.processId;
+        // temporary code -
+        if (stage.type === 'gateway') {
+          stage.nextStages = nextStages.splice(0, 1);
+        }
+        if (ele.name === 'bpmn2:callActivity') {
+          stage.processDefinitionKey = ele.elements.find(extEle => extEle.name = 'bpmn2:extensionElements')?.elements.find(obj => obj.name === 'zeebe:calledElement')?.attributes?.processId;
         }
         return stage;
       }
     }).filter(obj => obj?.key);
     return targetProcessJSON;
+  }
+
+  bpmnToDataFlow(bpmnJson) {
+
+    let bpmnProcessJsonNodes = bpmnJson.elements[0]['elements'][0];
+    let bpmnProcessJsonDiagram = bpmnJson.elements[0]['elements'][1]['elements'][0];
+
+    const dataflow = {
+      name: bpmnProcessJsonNodes.attributes.name || bpmnProcessJsonNodes.attributes.id,
+      nodes: [],
+      flowchart: []
+    };
+    const nodeKeyMapping = {};
+    const edges = {};
+
+    dataflow.nodes = bpmnProcessJsonNodes.elements.map(ele => {
+      if (ele.name === "bpmn2:sequenceFlow") {
+        edges[ele?.attributes.id] = ele?.attributes;
+        return;
+      } else {
+        let stage = { ...Mappings.StageMappings[ele.name] };
+        let oldNode = { ...Mappings.NodeMappings[ele.name] };
+        let node = JSON.parse(JSON.stringify(oldNode));
+        node.connector_id = stage.type;
+        node.name = ele?.attributes.name || ele?.attributes.id;
+        node.type = stage.type;
+        node['description'] = stage.subType;
+        node.node_id = ele?.attributes.id;
+        node.properties = [
+          {
+            "key": "tags",
+            "value": "[]"
+          },
+          {
+            "key": "name",
+            "value": ele?.attributes.name || ele?.attributes.id
+          },
+          {
+            "key": "key",
+            "value": ele?.attributes.id
+          },
+          {
+            "key": "description",
+            "value": ele?.attributes.name
+          },
+          {
+            "key": "assignee",
+            "value": ""
+          },
+          {
+            "key": "subType",
+            "value": stage.subType
+          },
+          {
+            "key": "displayName",
+            "value": ele?.attributes.name
+          },
+
+          {
+            "key": "config",
+            "value": ""
+          }
+        ];
+        nodeKeyMapping[ele?.attributes.id] = node;
+        return node;
+      }
+
+    }).filter(obj => obj?.type);
+
+    dataflow.flowchart = bpmnProcessJsonDiagram.elements.map(ele => {
+      if (ele.name === "bpmndi:BPMNShape") {
+        let oldNode = { ...Mappings.DiagramMapping[nodeKeyMapping[ele.attributes.bpmnElement]?.description] };
+        let node = JSON.parse(JSON.stringify(oldNode));
+        if (ele.attributes.bpmnElement) {
+          node.id = ele.attributes.bpmnElement;
+          node.position = {
+            x: parseInt(ele?.elements[0].attributes.x),
+            y: parseInt(ele?.elements[0].attributes.y),
+          }
+          node.data.props.text = nodeKeyMapping[ele.attributes.bpmnElement].name;
+          node.data.props.displayName = nodeKeyMapping[ele.attributes.bpmnElement].name;
+
+
+        }
+
+        return node;
+      }
+      if (ele.name === "bpmndi:BPMNEdge") {
+        return {
+          id: ele.attributes.bpmnElement,
+          connector_id: "",
+          target: edges[ele.attributes.bpmnElement].targetRef,
+          source: edges[ele.attributes.bpmnElement].sourceRef,
+          type: "smoothstep",
+          labelBgStyle: {
+            fill: "#0F1013",
+            color: "#0F1013"
+          },
+          labelStyle: {
+            fill: "#E6E6E6",
+            fontWeight: 700
+          },
+          arrowHeadType: "arrowclosed",
+          style: {
+            strokeWidth: 2.5
+          }
+        };
+        // console.log("$$$$$$$$$ EDGE node ", node);
+
+
+      }
+    });
+    return dataflow;
+
+  }
+
+  async deleteProcessDefinitions(headers: CommonHeadersDto, queryDto: DeleteProcessDefinitionDto): Promise<CustomResponse | CustomError> {
+    if (queryDto?.startVersion > queryDto?.endVersion) {
+      throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.START_END_VERSION_ERROR);
+    }
+    let condition = {
+      key: queryDto.key,
+      version: { $gte: queryDto.startVersion, $lte: queryDto.endVersion }
+    }
+    try {
+      const result = await this.processDefinitionRepositoryImpl.deleteBulk(condition);
+
+      return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, result);
+    } catch (error) {
+      this.logger.error(error);
+      return new CustomError(HttpStatus.INTERNAL_SERVER_ERROR, CustomMessages.FAILURE);
+    }
+  }
+
+  async updateDefinition(headers: CommonHeadersDto, id: string, updateProcessDefinitionDto: DefaultProcessDefinitionDto): Promise<CustomResponse | CustomError> {
+    const workflow = await this.processDefinitionRepositoryImpl.findOne({ _id: id });
+    if (!workflow) {
+      throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.WORKFLOW_NOT_FOUND);
+    }
+
+    // updateProcessDefinitionDto['version'] = workflow.version + 1;
+    const data = await this.processDefinitionRepositoryImpl.update({ _id: id }, { default: updateProcessDefinitionDto.default });
+    this.processDefinitionRepositoryImpl.updateMany({ key: workflow.key, _id: { $ne: id } }, { default: false });
+    this.audits.pushAuditLogs(headers, LogEntities.PROCESS_DEF, data, Operations.UPDATE);
+    return new CustomResponse(HttpStatus.OK, CustomMessages.WORKFLOW_UPDATED, updateProcessDefinitionDto);
   }
 
 }

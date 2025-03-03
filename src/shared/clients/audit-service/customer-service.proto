@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package customer;
+
+message Customer {
+    optional string _id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string mobile = 4;
+    optional bool found = 5;
+}
+
+message getCustomerRequest {
+  string mobile = 1; 
+}
+
+message getCustomerById {
+  string _id = 1; 
+}
+
+service CustomerService {
+    rpc AddCust (Customer) returns (Customer) { }  
+    rpc GetCustByMobileNo(getCustomerRequest) returns (Customer) { }  
+    rpc GetCustById(getCustomerById) returns (Customer) { }
+}

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package app;
+
+message CreateInstancesRequest {
+    string processDefinitionId = 1;
+    query query = 2;
+}
+message CreateInstancesRequestKey {
+    string key = 1;
+    query query = 2;
+}
+message query {
+  int32 version = 1;
+}
+message startRequest {
+  string processInstanceId = 1;
+  string parameters = 2;
+}
+message runByIdRequest {
+  string processDefinitionId = 1;
+  string parameters = 2;
+}
+message runRequest {
+  string key = 1;
+  query query = 2;
+  string parameters = 3;
+}

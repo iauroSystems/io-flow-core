@@ -9,20 +9,22 @@ import { Constants } from 'src/common/const/constants'
 import { ProcessInstanceRepositoryImpl } from 'src/models/process-instances/repository/process-instances.repository.impl';
 import { ProcessDefinitionRepositoryImpl } from "src/models/process-definitions/repository/process-definitions.repository.impl";
 import { UserTasksRepositoryImpl } from 'src/models/user-tasks/repository/user-tasks.repository.impl';
-import { Executor } from './providers/executor';
 import { CommonHeadersDto } from 'src/shared/dtos';
 import { GetProcessInstanceStatsQueryDto } from '../process-instances/dtos';
 import { InputStatuses } from 'src/common/const/enums';
 import * as _ from 'lodash';
+import CustomGrpcResponse from 'src/common/providers/custom-grpc-response.service';
+import { CustomRpcException, mapHttpStatusToGrpcStatus } from 'src/common/exceptions/custom-grpc-error';
+import { ExecutorService } from '../executor/executor.service';
+
 @Injectable()
 export class TasksService {
   private readonly logger: Logger = new Logger(TasksService.name);
-
   constructor (
-    private processDefinitionRepositoryImpl: ProcessDefinitionRepositoryImpl,
     private processInstanceRepositoryImpl: ProcessInstanceRepositoryImpl,
     private userTaskRepositoryImpl: UserTasksRepositoryImpl,
-    private execute: Executor
+    private execute: ExecutorService,
+
   ) { }
 
   /**
@@ -31,7 +33,7 @@ export class TasksService {
    * @param completeTaskDto {object} - Input parameters to complete the task
    * @returns {Promise} - CustomError or CustomResponse, e.g. {statusCode: 400, message: "", error: {}}/{statusCode: 200, message: "", result: {}}
    */
-  async completeTask(headers: CompleteTasksHeadersDto, params: CompleteTaskParams, taskData: CompleteTaskBody): Promise<CustomResponse | CustomError> {
+  async completeTask(headers: CompleteTasksHeadersDto, params: CompleteTaskParams, taskData: CompleteTaskBody, grpcCall?: boolean): Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     try {
       // Check if the user who has assigned the task is performing the activity
       // const userTask = await this.userTaskRepositoryImpl.findOne({ taskId: taskData.taskId, assignee: headers['user-id'] });
@@ -46,13 +48,20 @@ export class TasksService {
         condition['stages.type'] = Constants.STAGE_TYPES.ACTIVITY;
       }
       const processInstance = await this.processInstanceRepositoryImpl.findOne(condition);
+      this.execute.instances[params.processInstanceId] = processInstance;
       if (!processInstance) {
+        if (grpcCall) {
+          throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), CustomMessages.BAD_REQUEST);
+        }
         throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.BAD_REQUEST);
       }
 
       switch (taskData.status) {
         case InputStatuses.COMPLETE:
           if (!(taskData.taskId || taskData.taskKey)) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), 'task not found');
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, 'task not found');
 
           }
@@ -66,60 +75,93 @@ export class TasksService {
           });
 
           if (taskDetails.status === Constants.STAGE_STATUSES.COMPLETED || taskDetails.status === Constants.STAGE_STATUSES.STARTED) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), `Already ${taskDetails.status}`);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, `Already ${taskDetails.status}`);
           }
           if (processInstance.status === Constants.STAGE_STATUSES.ON_HOLD || processInstance.status === Constants.STAGE_STATUSES.CANCELLED) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), `The flow is in ${processInstance.status} state`);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, `The flow is in ${processInstance.status} state`);
           }
 
           if (taskDetails.status !== Constants.STAGE_STATUSES.ACTIVE && taskDetails.status !== Constants.STAGE_STATUSES.ERROR) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), CustomMessages.TASK_NOT_ACTIVE);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.TASK_NOT_ACTIVE);
           }
 
           if (taskDetails.subType === Constants.STAGE_SUB_TYPES.END) {
             // mark current task as complete
-            await this.execute.makeFlowEnd(processInstance, taskDetails, taskData, headers['user-id']);
+            await this.execute.makeFlowEnd(params.processInstanceId, taskDetails.key, taskData, headers['user-id']);
+            if (grpcCall) {
+              return new CustomGrpcResponse(mapHttpStatusToGrpcStatus(HttpStatus.OK), CustomMessages.WORKFLOW_ENDED);
+            }
             return new CustomResponse(HttpStatus.OK, CustomMessages.WORKFLOW_ENDED);
           }
 
           if (taskDetails.subType === Constants.STAGE_SUB_TYPES.SUB_PROCESS && taskDetails.processInstanceId) {
             const childProcessInstance = await this.processInstanceRepositoryImpl.findOne({ _id: taskDetails.processInstanceId, status: Constants.STAGE_STATUSES.COMPLETED });
             if (!childProcessInstance) {
+              if (grpcCall) {
+                throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), CustomMessages.CHILD_PROCESS_INSTANCE_NOT_COMPLETED);
+              }
               throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.CHILD_PROCESS_INSTANCE_NOT_COMPLETED);
             }
           }
           // mark current task as complete
-          await this.execute.makeTaskComplete(processInstance, taskDetails, taskData, headers['user-id']);
+          await this.execute.makeTaskComplete(params.processInstanceId, taskDetails.key, taskData, headers['user-id']);
           break;
         case InputStatuses.HOLD:
           if (processInstance.status === Constants.STAGE_STATUSES.ON_HOLD) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), `Already ${processInstance.status}`);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, `Already ${processInstance.status}`);
           }
 
-          await this.execute.makeFlowHold(processInstance);
+          await this.execute.makeFlowHold(params.processInstanceId);
           break;
         case InputStatuses.CANCEL:
           if (processInstance.status === Constants.STAGE_STATUSES.CANCELLED) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), `Already ${processInstance.status}`);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, `Already ${processInstance.status}`);
           }
-          await this.execute.makeFlowCancel(processInstance);
+          await this.execute.makeFlowCancel(params.processInstanceId);
 
           break;
         case InputStatuses.RESUME:
           if (processInstance.status === Constants.STAGE_STATUSES.ACTIVE) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), `Already ${processInstance.status}`);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, `Already ${processInstance.status}`);
           }
           if (processInstance.status !== Constants.STAGE_STATUSES.ON_HOLD) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), CustomMessages.FLOW_NOT_ON_HOLD);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.FLOW_NOT_ON_HOLD);
           }
-          await this.execute.makeFlowResume(processInstance);
+          await this.execute.makeFlowResume(params.processInstanceId);
           break;
         default:
           if (processInstance.status === Constants.STAGE_STATUSES.ON_HOLD || processInstance.status === Constants.STAGE_STATUSES.CANCELLED) {
+            if (grpcCall) {
+              throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), `The flow is in ${processInstance.status} state`);
+            }
             throw new CustomError(HttpStatus.BAD_REQUEST, `The flow is in ${processInstance.status} state`);
           }
-          await this.execute.saveParams(processInstance, taskData, headers['user-id']);
+          await this.execute.saveParams(params.processInstanceId, taskData, headers['user-id']);
           break;
+      }
+      if (grpcCall) {
+        return new CustomGrpcResponse(mapHttpStatusToGrpcStatus(HttpStatus.OK), CustomMessages.TASK_UPDATED);
       }
       return new CustomResponse(HttpStatus.OK, CustomMessages.TASK_UPDATED);
     } catch (err) {
@@ -136,7 +178,7 @@ export class TasksService {
    * @param taskData {object} - Input parameters
    * @returns {Promise} - CustomError or CustomResponse, e.g. {statusCode: 400, message: "", error: {}}/{statusCode: 200, message: "", result: {}}
    */
-  async reassignTask(headers: CompleteTasksHeadersDto, params: CompleteTaskParams, taskData: ReAssignTaskBody): Promise<CustomResponse | CustomError> {
+  async reassignTask(headers: CompleteTasksHeadersDto, params: CompleteTaskParams, taskData: ReAssignTaskBody, grpcCall?: boolean): Promise<CustomResponse | CustomError | CustomGrpcResponse> {
     try {
 
       const condition = {
@@ -147,14 +189,23 @@ export class TasksService {
         condition['stages.type'] = Constants.STAGE_TYPES.ACTIVITY;
       }
       if (!(taskData.assignee && taskData.watchers)) {
+        if (grpcCall) {
+          throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), 'assignee and watchers must be specified');
+        }
         throw new CustomError(HttpStatus.BAD_REQUEST, 'assignee and watchers must be specified');
       }
       const processInstance = await this.processInstanceRepositoryImpl.findOne(condition);
       if (!processInstance) {
+        if (grpcCall) {
+          throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), CustomMessages.BAD_REQUEST);
+        }
         throw new CustomError(HttpStatus.BAD_REQUEST, CustomMessages.BAD_REQUEST);
       }
 
       if (!(taskData.taskId || taskData.taskKey)) {
+        if (grpcCall) {
+          throw new CustomRpcException(mapHttpStatusToGrpcStatus(HttpStatus.BAD_REQUEST), 'task not found');
+        }
         throw new CustomError(HttpStatus.BAD_REQUEST, 'task not found');
       }
 
@@ -169,11 +220,12 @@ export class TasksService {
       // change task assignee
       await this.execute.changeTaskAssignee(processInstance.id, taskDetails, taskData.assignee, taskData.watchers);
 
-
+      if (grpcCall) {
+        return new CustomGrpcResponse(mapHttpStatusToGrpcStatus(HttpStatus.OK), CustomMessages.TASK_UPDATED);
+      }
       return new CustomResponse(HttpStatus.OK, CustomMessages.TASK_UPDATED);
     } catch (err) {
       this.logger.error(err);
-
       throw err;
     }
   }
@@ -324,7 +376,6 @@ export class TasksService {
 
     const count = await this.userTaskRepositoryImpl.count(condition);
     const data = await this.userTaskRepositoryImpl.find(condition, {}, query.page, query.size, sort || { $natural: -1 });
-
     return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, { count, data });
   }
 
@@ -412,8 +463,8 @@ export class TasksService {
     return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS, stats[0]);
   }
 
-  async updateTimer() {
-    this.execute.makeTimerEventEnd();
+  async updateTimer(headers: CommonHeadersDto) {
+    this.execute.makeTimerEventEnd(headers);
     return new CustomResponse(HttpStatus.OK, CustomMessages.SUCCESS);
   }
 

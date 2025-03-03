@@ -29,6 +29,11 @@ export class CreateProcessInstanceDto {
   @Type(() => Params)
   parameters: Params;
 
+  // @ApiProperty()
+  // @IsOptional()
+  // @IsString()
+  // @IsOptional()
+  // validationId: string;
 
 }
 

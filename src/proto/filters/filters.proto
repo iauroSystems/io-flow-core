@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package app;
+
+import "src/proto/common-requests.proto";
+import "src/proto/filters/filters-response.proto";
+
+service FiltersController {
+  rpc FindAllFilters (FetchAllRequest) returns (FiltersListResponse) {};
+  rpc FindFiltersById (Id) returns (FiltersResponse) {};
+}
+

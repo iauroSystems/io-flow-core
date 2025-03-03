@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package app;
+
+service AccessController {
+      rpc CheckAccess (CheckAccessReq) returns (CheckAccessRes){}
+
+}
+
+message CheckAccessReq{
+    string token=1;
+    string auth=2;
+}
+message CheckAccessRes{
+    bool access=1;
+    string statusCode=2;
+    string message=3;
+    repeated string result=4;
+}
+
